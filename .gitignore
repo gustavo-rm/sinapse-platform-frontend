@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Angular
+/dist/
+/tmp/
+/out-tsc/
+/bazel-out/
+.angular/
+*.tsbuildinfo
+
+# Testes e cobertura
+/coverage/
+/.nyc_output/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Editores
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.history/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Ambiente local. Nenhuma credencial é lida por este cliente — a sessão vive em cookie
+# HttpOnly emitido pelo backend —, mas configuração local de proxy e de ambiente não é
+# versionada.
+.env
+.env.*
+!.env.example
+*.local.json

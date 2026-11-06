@@ -1,0 +1,155 @@
+/*
+ * Student shell. Only var(--token) values. Media queries cannot read custom properties, so the
+ * two widths below are the values of bp-md (768px) and bp-lg (1024px) in tokens.json, written out
+ * the way sinapse.css already does; scripts/style-literals.test.mjs keeps them equal.
+ */
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: var(--z-overlay);
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible {
+  transform: none;
+}
+
+.shell {
+  min-height: 100vh;
+}
+
+/* --- Navigation: bottom bar below bp-md ----------------------------------- */
+.nav {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: var(--z-sticky);
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border-subtle);
+}
+.nav__list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-1);
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+.nav__link:hover {
+  color: var(--primary);
+}
+.nav__link--active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.nav__icon {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
+}
+
+/* --- Content ---------------------------------------------------------------- */
+.main {
+  display: block;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--space-10) var(--space-4) var(--space-12);
+}
+.main:focus {
+  outline: none;
+}
+.footer {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  /* Clears the fixed bottom bar: icon, gap, label and the link padding. */
+  padding: 0 var(--space-4) calc(var(--space-16) + var(--space-8));
+}
+
+/* --- Icon rail of rail-w, from bp-md --------------------------------------- */
+@media (min-width: 768px) {
+  .shell {
+    display: grid;
+    grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  }
+  .nav {
+    position: sticky;
+    inset: 0 auto auto 0;
+    height: 100vh;
+    border-top: 0;
+    border-right: 1px solid var(--border-subtle);
+  }
+  .nav__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-6) var(--space-2);
+  }
+  .nav__link {
+    border-radius: var(--radius-md);
+  }
+  /* The label stays as the accessible name while only the icon shows. */
+  .nav__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .main {
+    padding-inline: var(--space-8);
+  }
+  .footer {
+    padding: 0 var(--space-8) var(--space-12);
+  }
+}
+
+/* --- Labelled rail of sidebar-w, from bp-lg -------------------------------- */
+@media (min-width: 1024px) {
+  .shell {
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  }
+  .nav__list {
+    padding: var(--space-6) var(--space-3);
+  }
+  .nav__link {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+  .nav__label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nav__link {
+    transition:
+      background-color 120ms,
+      color 120ms;
+  }
+}

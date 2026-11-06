@@ -19,16 +19,42 @@ premissa de arquitetura, não detalhe de implantação: a sessão viaja em um *c
 
 ### Estado
 
-**Bootstrap.** Este repositório contém, hoje, o Design System e a documentação que governam o
-desenvolvimento. A aplicação Angular ainda não foi criada.
+**Fundação (FE-2).** A aplicação Angular existe: estrutura de pastas, fronteiras de arquitetura
+verificadas pelo *lint*, rotas preguiçosas por área com *layouts* público e do aluno, catálogo de
+rótulos, os quatro componentes de estado e o serviço de tempo. Ainda não há cliente de API nem tela
+de produto — chegam em FE-3 e FE-4. O detalhe está em [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     a referência obrigatória de interface
+docs/adr/                 registros de decisão de arquitetura
 docs/ai/                  contexto persistente para sessões de IA
 src/styles/tokens.json    a fonte dos tokens
 src/styles/tokens.css     gerado de tokens.json — não editar à mão
 src/styles/sinapse.css    as classes dos componentes
+src/app/                  core, shared, features, layouts — ver CLAUDE.md §4
+scripts/                  gerador de tokens.css e testes em Node
 ```
+
+### Instalar, rodar e testar
+
+Pré-requisito: Node 22.22.3 ou superior na linha 22 (ou 24.15 ou superior), a faixa que o
+Angular 22 declara. O npm é o que acompanha o Node.
+
+```bash
+npm ci                 # instala exatamente o que está no package-lock.json
+npm start              # servidor de desenvolvimento em http://localhost:4200
+npm run lint           # ESLint, incluindo as fronteiras de CLAUDE.md §6
+npm test               # testes unitários (Vitest) e os testes de scripts/ (Node)
+npm run build          # build de produção em dist/sinapse-web
+npm run tokens         # regenera src/styles/tokens.css a partir de tokens.json
+npm run tokens:check   # falha se tokens.css não for a regeneração de tokens.json
+```
+
+O CI (`.github/workflows/ci.yml`) roda `tokens:check`, `lint`, `test` e `build` a cada *push* e
+*pull request* para `develop` e `main`.
+
+TypeScript e Vitest estão fixados (`~6.0.3` e `~4.1.12`). **Não** rode `npm install
+typescript@latest`: a 7.x é incompatível com o Angular 22. Ver `CLAUDE.md` §3.
 
 ### Como usar os estilos
 
@@ -48,12 +74,9 @@ acontece em `tokens.json` e desce por regeneração.
 
 ### Como rodar contra o backend local
 
-Pré-requisitos: Node 22 ou superior, e o `sinapse-platform` em execução no perfil `local`.
-
-```bash
-npm install
-npm start      # o dev server encaminha /api/v1 para http://localhost:8080
-```
+Ainda não se aplica: este cliente não faz nenhuma chamada HTTP até FE-3, que traz o cliente de API
+e o encaminhamento de `/api/v1` do servidor de desenvolvimento para o `sinapse-platform` em
+execução no perfil `local`.
 
 O *cookie* de sessão é `Secure`, o que impediria seu armazenamento em `http://localhost`. O perfil
 `local` do backend já traz `sinapse.identity.session.cookie-secure: false` — **só esse perfil**.
@@ -62,7 +85,8 @@ O *cookie* de sessão é `Secure`, o que impediria seu armazenamento em `http://
 
 Código, nomes e *commits* em inglês; documentação em `docs/` e texto visível ao usuário em
 português. *Conventional Commits*. Ramos no formato `<tipo>/<versão>/<descrição>`, por exemplo
-`feature/1.0/api-client`.
+`feature/1.0/api-client`, com *pull request* para `develop`; nada é commitado direto em `main` ou
+`develop`.
 
 As regras operacionais completas estão em [`CLAUDE.md`](CLAUDE.md).
 
@@ -88,16 +112,42 @@ configuration.
 
 ### State
 
-**Bootstrap.** Today this repository holds the design system and the documentation that govern
-development. The Angular application has not been created yet.
+**Foundation (FE-2).** The Angular application exists: folder structure, architecture boundaries
+checked by lint, lazy routes per area with the public and student layouts, the label catalogue, the
+four state components and the time service. There is no API client and no product screen yet —
+those come in FE-3 and FE-4. Details in [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     the binding interface reference
+docs/adr/                 architecture decision records
 docs/ai/                  persistent context for AI sessions
 src/styles/tokens.json    the source of the tokens
 src/styles/tokens.css     generated from tokens.json — do not edit by hand
 src/styles/sinapse.css    the component classes
+src/app/                  core, shared, features, layouts — see CLAUDE.md §4
+scripts/                  tokens.css generator and Node tests
 ```
+
+### Install, run and test
+
+Requirement: Node 22.22.3 or newer on the 22 line (or 24.15 or newer), the range Angular 22
+declares. npm is the one that ships with Node.
+
+```bash
+npm ci                 # installs exactly what package-lock.json holds
+npm start              # development server on http://localhost:4200
+npm run lint           # ESLint, including the boundaries of CLAUDE.md §6
+npm test               # unit tests (Vitest) and the tests under scripts/ (Node)
+npm run build          # production build into dist/sinapse-web
+npm run tokens         # regenerates src/styles/tokens.css from tokens.json
+npm run tokens:check   # fails if tokens.css is not the regeneration of tokens.json
+```
+
+CI (`.github/workflows/ci.yml`) runs `tokens:check`, `lint`, `test` and `build` on every push and
+pull request to `develop` and `main`.
+
+TypeScript and Vitest are pinned (`~6.0.3` and `~4.1.12`). **Do not** run `npm install
+typescript@latest`: 7.x is incompatible with Angular 22. See `CLAUDE.md` §3.
 
 ### Using the styles
 
@@ -117,12 +167,9 @@ and flows down by regeneration.
 
 ### Running against a local backend
 
-Requirements: Node 22 or newer, and `sinapse-platform` running under the `local` profile.
-
-```bash
-npm install
-npm start      # the dev server proxies /api/v1 to http://localhost:8080
-```
+Not applicable yet: this client makes no HTTP call until FE-3, which brings the API client and the
+development server's forwarding of `/api/v1` to `sinapse-platform` running under the `local`
+profile.
 
 The session cookie is `Secure`, which would stop it being stored on `http://localhost`. The
 backend's `local` profile already sets `sinapse.identity.session.cookie-secure: false` — **that
@@ -132,7 +179,8 @@ profile only**.
 
 Code, names and commits in English; documentation under `docs/` and user-facing text in Brazilian
 Portuguese. Conventional Commits. Branches as `<type>/<version>/<description>`, for example
-`feature/1.0/api-client`.
+`feature/1.0/api-client`, with the pull request into `develop`; nothing is committed directly to
+`main` or `develop`.
 
 The full operating rules are in [`CLAUDE.md`](CLAUDE.md).
 

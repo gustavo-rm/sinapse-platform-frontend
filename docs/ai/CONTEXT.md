@@ -21,6 +21,9 @@ Two sibling repositories:
 | Which routes exist, and the shape of every body | `docs/openapi/openapi.json` in `sinapse-platform` — 59 operations, versioned, compared by a test on every build |
 | How the plan cycle behaves for a client | `docs/FLUXO_DE_PLANO_FRONTEND.md` in `sinapse-platform` |
 | Which statements about the backend are unverified | `docs/AFIRMACOES_A_CONFIRMAR.md` in `sinapse-platform` |
+| Which enum values exist | the snapshot, which inlines them unnamed; the names are the backend's Java enums. Copied value for value into `src/app/core/api/contract/enums.ts` — READ@c3abbff |
+| Which `urn:sinapse:problem:*` types exist | **not the snapshot**, which gives `ProblemDetails.type` as a `uri` with one example: `shared.web.problem.ApiErrorType` in the backend source, 17 constants. Copied into `src/app/core/api/contract/problem-type.ts` — READ@c3abbff |
+| How wide each history window may be | **not the snapshot**, which says only that each window "is capped": the backend's configuration defaults — `sinapse.read-model.max-window: 31d` (`/me/agenda`, classroom roster, student panel), `sinapse.planning.max-schedule-window: 90d` (`/planned-sessions`), `sinapse.learning-record.max-history-window: 90d` (`/study-sessions`). Copied into `WINDOW_CAP_DAYS` of `AccountTimeService` — READ@c3abbff. A deployment that overrides them is invisible to this client |
 | What the interface must look like and why | `docs/DESIGN_SYSTEM.md` here, and the Design System artifact it cites |
 | What must not be built | `CLAUDE.md` §8 here |
 
@@ -47,3 +50,9 @@ A claim about the backend that none of those supports is not a fact. Say so rath
 
 In `CLAUDE.md`: language standard, Conventional Commits, branch naming, the architecture rules
 enforced by lint, and the definition of done.
+
+Branches: work happens on `<type>/<version>/<description>` and the pull request targets `develop`,
+created from `main` in FE-2. Nothing is committed to `main` or `develop` directly; a release into
+`main` is a separate, deliberate act. Which branch is the GitHub default is a repository setting
+and the owner's call — DECISION(owner, FE-2 task prompt) for the flow; the default branch is
+unchanged (`main`).

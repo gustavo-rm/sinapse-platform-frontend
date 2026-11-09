@@ -9,12 +9,19 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
 import ts from 'typescript';
 
-import { PROVENANCE, SCHEMA_DTS, SNAPSHOT, regenerate } from './generate-contract.mjs';
+import {
+  CONTRACT_DIR,
+  PROVENANCE,
+  SCHEMA_DTS,
+  SNAPSHOT,
+  regenerate,
+} from './generate-contract.mjs';
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'patch', 'head', 'options', 'trace'];
 
@@ -102,4 +109,19 @@ test('the two checks reject a declaration file that carries a runtime value', ()
   // SyntaxKind has aliases (VariableStatement is also FirstStatement): count, do not name.
   assert.equal(runtimeStatements(withRuntime).length, 2);
   assert.notEqual(emittedJavaScript(withRuntime), '');
+});
+
+test('models.ts aliases every schema of the snapshot, under its own name, and nothing else', () => {
+  const spec = JSON.parse(readFileSync(SNAPSHOT, 'utf8'));
+  const models = readFileSync(resolve(CONTRACT_DIR, 'models.ts'), 'utf8');
+  const aliases = [...models.matchAll(/^export type (\w+) = Schemas\['(\w+)'\];$/gm)];
+  for (const [line, alias, schema] of aliases) {
+    assert.equal(alias, schema, `the alias must carry the schema's name: ${line}`);
+  }
+  const exported = [...models.matchAll(/^export /gm)].length;
+  assert.equal(exported, aliases.length, 'models.ts exports only schema aliases');
+  assert.deepEqual(
+    aliases.map(([, alias]) => alias).sort(),
+    Object.keys(spec.components.schemas).sort(),
+  );
 });

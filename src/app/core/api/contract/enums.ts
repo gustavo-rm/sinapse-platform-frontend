@@ -1,16 +1,17 @@
 /**
  * Every enumeration the API sends or accepts, value for value.
  *
- * Source: `docs/openapi/openapi.json` of `sinapse-platform@c3abbff` (59 operations). The snapshot
- * inlines each enum without a name, so the names below are the backend's Java enums, read at the
- * same commit; each comment lists where the values appear in the snapshot.
+ * Source: the vendored snapshot, `openapi.json` in this folder (`sinapse-platform@46b5b3c`, 59
+ * operations; first written from `c3abbff`, whose snapshot is the same file). The snapshot inlines
+ * each enum without a name, so the names below are the backend's Java enums; each comment lists
+ * where the values appear in the snapshot.
  *
  * Hand-written on purpose and kept as runtime arrays: the label catalogue proves its
- * exhaustiveness over these values. Whether the API types are later generated from the snapshot
- * is the open decision D-FE1; if they are, these lists must be asserted equal to the generated
- * unions, not dropped.
+ * exhaustiveness over these values, and `Record<Enum, string>` needs a concrete list. The types
+ * are generated from the snapshot (ADR 0002), and `enums.contract.ts` asserts, at compile time,
+ * that each list here and each generated union it corresponds to hold the same values.
  *
- * Never add a value here that the snapshot does not carry.
+ * Never add a value here that the snapshot does not carry: the build would refuse it.
  */
 
 /** `identity.api.AccountStatus` — `RegistrationResponse.status`, `StudentStateView.accountStatus`. */

@@ -73,6 +73,8 @@ if (isMain) {
     console.log(`${relative(root, SCHEMA_DTS)} matches the vendored snapshot.`);
   } else {
     writeFileSync(SCHEMA_DTS, generated);
-    console.log(`Wrote ${relative(root, SCHEMA_DTS)} with openapi-typescript ${generatorVersion()}.`);
+    console.log(
+      `Wrote ${relative(root, SCHEMA_DTS)} with openapi-typescript ${generatorVersion()}.`,
+    );
   }
 }

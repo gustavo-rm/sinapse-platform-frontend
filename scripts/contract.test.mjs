@@ -31,11 +31,12 @@ function sha256(bytes) {
 
 /** The value of a `| Field | Value |` row of the provenance table, without backticks. */
 function provenance(field) {
-  const row = readFileSync(PROVENANCE, 'utf8')
+  const cells = readFileSync(PROVENANCE, 'utf8')
     .split('\n')
-    .find((line) => line.startsWith(`| ${field} |`));
-  assert.ok(row, `README.md has no "${field}" row`);
-  return row.split('|')[2].trim().replace(/`/g, '');
+    .map((line) => line.split('|').map((cell) => cell.trim()))
+    .find((row) => row[0] === '' && row[1] === field);
+  assert.ok(cells, `README.md has no "${field}" row`);
+  return cells[2].replace(/`/g, '');
 }
 
 /** The JavaScript a TypeScript source compiles to, comments and blank lines removed. */
@@ -61,8 +62,7 @@ function runtimeStatements(source) {
   const file = ts.createSourceFile('schema.d.ts', source, ts.ScriptTarget.ES2022, false);
   return file.statements
     .filter(
-      (statement) =>
-        !ts.isInterfaceDeclaration(statement) && !ts.isTypeAliasDeclaration(statement),
+      (statement) => !ts.isInterfaceDeclaration(statement) && !ts.isTypeAliasDeclaration(statement),
     )
     .map((statement) => ts.SyntaxKind[statement.kind]);
 }

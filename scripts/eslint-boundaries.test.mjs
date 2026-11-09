@@ -155,3 +155,42 @@ test('R4 and R5: core/time and shared/labels keep their own exemptions', async (
     [],
   );
 });
+
+test('src/testing: a spec may import it, production code may not', async () => {
+  const spec = await boundaryMessages(
+    'src/app/core/api/allowed.spec.ts',
+    "import { server } from '../../../testing/msw/server';\nexport const s = server;\n",
+  );
+  assert.deepEqual(spec, []);
+
+  const production = await boundaryMessages(
+    'src/app/core/api/violation.ts',
+    "import { server } from '../../../testing/msw/server';\nexport const s = server;\n",
+  );
+  assert.equal(production.length, 1);
+  assert.match(production[0].text, /only a \*\.spec\.ts may import it/);
+
+  const elsewhere = await boundaryMessages(
+    'src/app/core/api/violation.spec.ts',
+    "import { x } from '../../../environments/x';\nexport const y = x;\n",
+  );
+  assert.equal(elsewhere.length, 1, 'a spec may leave src/app only for src/testing');
+});
+
+test('src/testing keeps R2: no /api/ literal in test infrastructure', async () => {
+  const messages = await boundaryMessages(
+    'src/testing/msw/violation.ts',
+    "export const a = '/api/v1/me/state';\n",
+  );
+  assert.equal(messages.length, 1);
+  assert.match(messages[0].text, /\bR2\b/);
+});
+
+test('a spec keeps the other boundaries of its directory', async () => {
+  const messages = await boundaryMessages(
+    'src/app/features/today/pages/violation.spec.ts',
+    "import { PLAN_ROUTES } from '../../plan/pages/plan.routes';\nexport const p = PLAN_ROUTES;\n",
+  );
+  assert.equal(messages.length, 1);
+  assert.match(messages[0].text, /\bR3\b/);
+});

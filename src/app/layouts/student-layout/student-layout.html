@@ -1,0 +1,43 @@
+<button type="button" class="skip-link sn-btn sn-btn--secondary" (click)="main.focus()">
+  Ir para o conteúdo
+</button>
+
+<div class="shell">
+  <nav class="nav" aria-label="Navegação principal">
+    <ul class="nav__list">
+      @for (item of items; track item.path) {
+        <li>
+          <a
+            class="nav__link"
+            [routerLink]="item.path"
+            routerLinkActive="nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            <svg
+              class="nav__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path [attr.d]="item.icon" />
+            </svg>
+            <span class="nav__label body-strong">{{ item.label }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <div class="content">
+    <main #main class="main" tabindex="-1">
+      <router-outlet />
+    </main>
+    <footer class="footer">
+      <sn-theme-switch [value]="theme.choice()" (changed)="theme.choose($event)" />
+    </footer>
+  </div>
+</div>

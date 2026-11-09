@@ -1,0 +1,53 @@
+// @ts-check
+const eslint = require('@eslint/js');
+const { defineConfig } = require('eslint/config');
+const tseslint = require('typescript-eslint');
+const angular = require('angular-eslint');
+
+const { boundaryConfigs } = require('./eslint.boundaries');
+
+module.exports = defineConfig([
+  {
+    files: ['**/*.ts'],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.recommended,
+      tseslint.configs.stylistic,
+      angular.configs.tsRecommended,
+    ],
+    processor: angular.processInlineTemplates,
+    rules: {
+      '@angular-eslint/directive-selector': [
+        'error',
+        {
+          type: 'attribute',
+          prefix: 'sn',
+          style: 'camelCase',
+        },
+      ],
+      '@angular-eslint/component-selector': [
+        'error',
+        {
+          type: 'element',
+          prefix: 'sn',
+          style: 'kebab-case',
+        },
+      ],
+    },
+  },
+  {
+    files: ['**/*.html'],
+    extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
+    rules: {},
+  },
+  // CLAUDE.md §6, rules R1 to R5. See eslint.boundaries.js.
+  ...boundaryConfigs(__dirname),
+  {
+    files: ['scripts/**/*.mjs'],
+    extends: [eslint.configs.recommended],
+    languageOptions: {
+      sourceType: 'module',
+      globals: { console: 'readonly', process: 'readonly' },
+    },
+  },
+]);

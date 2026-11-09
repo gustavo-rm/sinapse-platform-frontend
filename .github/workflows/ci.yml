@@ -1,0 +1,60 @@
+name: CI
+
+# Runs what a contributor runs locally before a pull request: the tokens.css regeneration check,
+# lint (with the architecture boundaries of CLAUDE.md §6), the unit and script tests, and the
+# production build. Any of them failing fails the job. Same shape as the backend's ci.yml, with
+# Node instead of Java and no service container: this client makes no HTTP call in its tests.
+#
+# This file alone does NOT block a merge. It makes the check exist and report. For it to block,
+# the job below has to be marked as a required status check in the branch protection of `develop`
+# and `main`, which is repository configuration, not something a commit can do.
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+# One run per ref: a new push cancels the run it made obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Angular 22 declares node ^22.22.3 || ^24.15.0 || >=26.0.0.
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # From the lockfile, exactly: TypeScript 6.0.x and Vitest 4.1.x as pinned in package.json.
+      - name: Install
+        run: npm ci
+
+      # tokens.css is generated from tokens.json and never edited by hand.
+      - name: tokens.css matches tokens.json
+        run: npm run tokens:check
+
+      - name: Lint
+        run: npm run lint
+
+      # `ng test --watch=false` (Vitest) and then the Node script tests under scripts/.
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

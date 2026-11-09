@@ -19,9 +19,10 @@ repository's `docs/FLUXO_DE_PLANO_FRONTEND.md`.
 
 ## 2. State
 
-**Bootstrap.** The Angular application has not been created. This repository holds the design
-system and the documentation that govern development. The first implementation task creates the
-project; it does not re-decide the design system.
+**Foundation (FE-2).** The Angular application exists: structure, lint boundaries, routing
+skeleton and layouts, the label catalogue, the four shared state components and the time service.
+There is no API client, no interceptor and no product screen yet — those are FE-3 and FE-4. Change
+detection is zoneless (`docs/adr/0001-deteccao-de-mudancas.md`).
 
 ## 3. Stack
 
@@ -30,12 +31,20 @@ project; it does not re-decide the design system.
 - `@angular/build` (esbuild + Vite)
 - `httpResource` from `@angular/common/http` for remote reads (`@publicApi` since 22.0)
 - Reactive Forms, typed
-- **Vitest 4.1.x** — `@angular/build` declares `vitest ^4.0.8`
+- **Vitest 4.1.x** — `@angular/build` 22.0 and 22.1 declare `vitest ^4.0.8`; from 22.2.0 the range
+  is `^4.0.8 || ^5.0.0`
 - MSW for network mocking, Playwright for end-to-end
 - ESLint + `angular-eslint`
 
-**Pin these in `package.json`.** The npm `latest` of `typescript` (7.x) and `vitest` (5.x) are
-**incompatible** with Angular 22 and break the build. Never run `npm install typescript@latest`.
+**Pin these in `package.json`.** The npm `latest` of `typescript` (7.x) is **incompatible** with
+Angular 22 and breaks the build. Never run `npm install typescript@latest`. Vitest 5.x is admitted
+by `@angular/build` 22.2 (and the 22.2.6 CLI generator writes `^5.0.0`), but this project stays on
+4.1.x, pinned as `~4.1.12`: moving to 5 is a deliberate upgrade, not a side effect of `ng new`.
+
+npm 10.9.9 cannot resolve Vitest 4.1.x from an empty lockfile (an Arborist crash, `Cannot read
+properties of null (reading 'edgesOut')`). The lockfile was resolved with npm 11.21.2; npm 10
+installs from it normally with `npm ci`. Adding or moving a dependency with npm 10 may hit the
+same crash — use `npx npm@11 install …` for that one step and commit the lockfile.
 
 No component library, no state-management library, no schema-validation library. Each of those is
 a decision with an ADR, not a convenience.
@@ -49,10 +58,13 @@ docs/ai/                  persistent context for AI sessions: CONTEXT.md, STATE.
 src/styles/tokens.json    the source of the tokens
 src/styles/tokens.css     GENERATED from tokens.json — never edit by hand
 src/styles/sinapse.css    the component classes
-src/app/core/             infrastructure: api, session, time, telemetry
+src/app/core/             infrastructure: api, session, time, telemetry, theme
+src/app/core/api/contract/ the server's enum values and problem types, hand-written from the snapshot
 src/app/shared/           reusable presentational code: ui, forms, labels, pipes
 src/app/features/<name>/  one folder per domain area: data, model, ui, pages
 src/app/layouts/          the application shells
+scripts/                  tokens.css generator and the Node script tests (tokens, styles, lint)
+eslint.boundaries.js      the rules of §6 as ESLint configuration, generated per directory
 ```
 
 A feature folder has exactly four subfolders: `data/` (resources and writes), `model/` (types,
@@ -102,7 +114,9 @@ response's `detail` field is in English and describes the problem for a develope
 
 **R7 — These boundaries are enforced by ESLint `no-restricted-imports` and fail the build.** They
 are the equivalent of `ModularityTests` in the backend. If a rule fails, fix the design, not the
-rule.
+rule. The rules that are not about imports — the `/api/` literal of R2, the date formatting of R4
+and the translations of R5 — use `no-restricted-syntax` next to it, in `eslint.boundaries.js`;
+`scripts/eslint-boundaries.test.mjs` proves each one rejects a deliberate violation.
 
 ## 7. The design system is binding
 

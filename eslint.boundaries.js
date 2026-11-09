@@ -8,6 +8,9 @@
 //   R4  no date is formatted outside core/time/** (AccountTimeService)
 //   R5  enum-to-text translation lives only in shared/labels/**
 //
+// Relative imports stay inside src/app, with one opening: a *.spec.ts may import src/testing (MSW
+// handlers and fixtures generated from the contract, FE-3), and production code may not.
+//
 // `no-restricted-imports` matches the import string as written, not the file it resolves to. So
 // that a relative path cannot slip past a boundary, the configuration is generated per directory
 // of src/app: in each one, the depth is known, and every `../` chain that would land in a
@@ -102,6 +105,10 @@ const R3_CORE = 'R3 (CLAUDE.md §6) — core/** never imports from features/** o
 const R3_UI =
   'R3 (CLAUDE.md §6) — ui/** never imports from data/**. A component receives data; it does not fetch it.';
 const OUTSIDE_APP = 'Relative imports stay inside src/app.';
+const OUTSIDE_APP_SPEC =
+  'Relative imports stay inside src/app; a spec may also reach src/testing, and nothing else.';
+const TESTING_ONLY =
+  'src/testing is test infrastructure (MSW, generated fixtures): only a *.spec.ts may import it.';
 
 /** @param {string} text */
 function escapeRegex(text) {
@@ -145,8 +152,9 @@ function landingPatterns(dirSegs, target) {
  *
  * @param {string} dir
  * @param {string[]} exemptions rule ids lifted for this file
+ * @param {{ spec?: boolean }} [kind] whether the files are specs, which may import src/testing
  */
-function restrictionsFor(dir, exemptions = []) {
+function restrictionsFor(dir, exemptions = [], kind = {}) {
   const segs = dir === '' ? [] : dir.split('/');
   const under = (/** @type {string} */ prefix) => dir === prefix || dir.startsWith(`${prefix}/`);
 
@@ -168,7 +176,17 @@ function restrictionsFor(dir, exemptions = []) {
     forbid(['shared', 'ui'], R3_CORE);
   }
   if (segs.includes('ui')) patterns.push({ regex: '(?:^|/)data(?:/|$)', message: R3_UI });
-  patterns.push({ regex: `^(?:\\.\\./){${segs.length + 1}}`, message: OUTSIDE_APP });
+  // Leaving src/app is refused, except for src/testing, which only a spec may reach.
+  patterns.push({
+    regex: `^(?:\\.\\./){${segs.length + 1}}(?!testing(?:/|$))`,
+    message: kind.spec ? OUTSIDE_APP_SPEC : OUTSIDE_APP,
+  });
+  if (!kind.spec) {
+    patterns.push({
+      regex: `^(?:\\.\\./){${segs.length + 1}}testing(?:/|$)`,
+      message: TESTING_ONLY,
+    });
+  }
 
   const paths = [];
   const syntax = [];
@@ -227,16 +245,35 @@ function boundaryConfigs(projectRoot) {
       rules: restrictionsFor('(unlisted)'),
     },
   ];
+  // src/testing (MSW handlers, generated fixtures) lives outside src/app and may import from it.
+  // R1, R2, R4 and R5 still hold there; only the "stay inside src/app" pattern does not apply.
+  const testing = restrictionsFor('(unlisted)');
+  blocks.push({
+    name: 'sinapse/boundaries/testing',
+    files: ['src/testing/**/*.ts'],
+    rules: {
+      ...testing,
+      'no-restricted-imports': [
+        'error',
+        { paths: testing['no-restricted-imports'][1].paths, patterns: [] },
+      ],
+    },
+  });
   for (const dir of directories(root)) {
-    const glob = `${APP_DIR}/${dir === '' ? '' : `${dir}/`}*.ts`;
+    const base = `${APP_DIR}/${dir === '' ? '' : `${dir}/`}`;
     const exempt = Object.keys(EXEMPT_FILES).filter(
       (file) => path.posix.dirname(file) === (dir || '.'),
     );
     blocks.push({
       name: `sinapse/boundaries/${dir || '(root)'}`,
-      files: [glob],
-      ignores: exempt.map((file) => `${APP_DIR}/${file}`),
+      files: [`${base}*.ts`],
+      ignores: [`${base}*.spec.ts`, ...exempt.map((file) => `${APP_DIR}/${file}`)],
       rules: restrictionsFor(dir),
+    });
+    blocks.push({
+      name: `sinapse/boundaries/${dir || '(root)'} (specs)`,
+      files: [`${base}*.spec.ts`],
+      rules: restrictionsFor(dir, [], { spec: true }),
     });
     for (const file of exempt) {
       blocks.push({

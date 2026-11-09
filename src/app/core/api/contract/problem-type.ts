@@ -1,9 +1,12 @@
 /**
  * The closed catalogue of `urn:sinapse:problem:*` types (RFC 7807 `type` member).
  *
- * Source: `shared.web.problem.ApiErrorType` of `sinapse-platform@c3abbff`, 17 constants. The
- * OpenAPI snapshot does not enumerate them: `ProblemDetails.type` is a `uri` string whose example
- * is `urn:sinapse:problem:resource-not-found`. A client tells errors apart by this member, never by
+ * Source: `shared.web.problem.ApiErrorType` of `sinapse-platform`, 17 constants, read at `c3abbff`
+ * and read again at `46b5b3c` (2026-11-09): the same 17 codes in the same order, and the file
+ * unchanged between the two commits. The OpenAPI snapshot does not enumerate them:
+ * `ProblemDetails.type` is a `uri` string whose example is `urn:sinapse:problem:resource-not-found`
+ * (STATE.md F7), so this list cannot be generated and a change on the server is invisible to the
+ * contract tests. Re-read that file whenever the vendored snapshot is refreshed. A client tells errors apart by this member, never by
  * the HTTP status — three of these share 409 (`CLAUDE.md` R6).
  */
 export const PROBLEM_TYPES = [

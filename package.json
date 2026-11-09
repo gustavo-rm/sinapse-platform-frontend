@@ -10,6 +10,10 @@
     "lint": "ng lint",
     "tokens": "node scripts/generate-tokens.mjs",
     "tokens:check": "node scripts/generate-tokens.mjs --check",
+    "contract": "node scripts/generate-contract.mjs",
+    "contract:check": "node scripts/generate-contract.mjs --check",
+    "contract:install": "npm ci --prefix tools/contract",
+    "contract:compare-live": "node scripts/compare-live-contract.mjs",
     "test:scripts": "node --test \"scripts/*.test.mjs\""
   },
   "private": true,
@@ -32,6 +36,7 @@
     "angular-eslint": "22.6.0",
     "eslint": "^10.12.0",
     "jsdom": "^30.0.0",
+    "msw": "~3.0.4",
     "prettier": "^3.8.1",
     "typescript": "~6.0.3",
     "typescript-eslint": "8.71.0",

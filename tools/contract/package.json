@@ -1,0 +1,10 @@
+{
+  "name": "sinapse-web-contract-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The type generator for the vendored OpenAPI contract, isolated from the application: openapi-typescript 7.13.x declares a peer typescript ^5.x, and the application pins TypeScript 6.0.x. See docs/adr/0002-tipos-gerados-cliente-escrito.md.",
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,4427 @@
+{
+  "components": {
+    "schemas": {
+      "Adherence": {
+        "description": "Adherence over the part of the plan that has already fallen due",
+        "properties": {
+          "executed": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "plannedElapsed": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "ratio": {
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "AvailabilityClosureRequest": {
+        "description": "The day an availability window stops applying",
+        "properties": {
+          "effectiveUntil": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "effectiveUntil"
+        ],
+        "type": "object"
+      },
+      "AvailabilityRequest": {
+        "description": "A weekly window the student is available to study in",
+        "properties": {
+          "dayOfWeek": {
+            "enum": [
+              "MONDAY",
+              "TUESDAY",
+              "WEDNESDAY",
+              "THURSDAY",
+              "FRIDAY",
+              "SATURDAY",
+              "SUNDAY"
+            ],
+            "example": "TUESDAY",
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "format": "date",
+            "type": "string"
+          },
+          "effectiveUntil": {
+            "format": "date",
+            "type": "string"
+          },
+          "endTime": {
+            "example": "21:00",
+            "type": "string"
+          },
+          "startTime": {
+            "example": "19:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dayOfWeek",
+          "effectiveFrom",
+          "endTime",
+          "startTime"
+        ],
+        "type": "object"
+      },
+      "AvailabilityResponse": {
+        "description": "A weekly window the student is available to study in",
+        "properties": {
+          "dayOfWeek": {
+            "enum": [
+              "MONDAY",
+              "TUESDAY",
+              "WEDNESDAY",
+              "THURSDAY",
+              "FRIDAY",
+              "SATURDAY",
+              "SUNDAY"
+            ],
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "format": "date",
+            "type": "string"
+          },
+          "effectiveUntil": {
+            "format": "date",
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ClassroomRequest": {
+        "description": "A classroom to open",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "subjectIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "ClassroomResponse": {
+        "description": "A classroom",
+        "properties": {
+          "archivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "OPEN",
+              "ARCHIVED"
+            ],
+            "type": "string"
+          },
+          "studentCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "subjectIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "type": "object"
+      },
+      "ClassroomRosterView": {
+        "description": "The students of a classroom, with adherence and total time",
+        "properties": {
+          "classroomId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/Student"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CompleteSessionRequest": {
+        "description": "The close of a running session",
+        "properties": {
+          "actualDurationMinutes": {
+            "description": "Omit to use the duration the application measured",
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "recallRating": {
+            "enum": [
+              "AGAIN",
+              "HARD",
+              "GOOD",
+              "EASY"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "recallRating"
+        ],
+        "type": "object"
+      },
+      "ConsentRequest": {
+        "description": "Consent to one purpose, against the wording that was displayed",
+        "properties": {
+          "purpose": {
+            "enum": [
+              "LEARNING_DATA_PROCESSING",
+              "INSTITUTION_SHARING",
+              "ACADEMIC_RESEARCH"
+            ],
+            "type": "string"
+          },
+          "termsVersionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "termsVersionId"
+        ],
+        "type": "object"
+      },
+      "ConsentSummary": {
+        "description": "One act of consent, granted or withdrawn",
+        "properties": {
+          "grantedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "grantedBy": {
+            "enum": [
+              "SELF",
+              "GUARDIAN"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "LEARNING_DATA_PROCESSING",
+              "INSTITUTION_SHARING",
+              "ACADEMIC_RESEARCH"
+            ],
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "termsVersion": {
+            "type": "string"
+          },
+          "termsVersionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DailyAgendaView": {
+        "description": "Planned sessions of a window, grouped by day, each with its execution",
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/Day"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "Day": {
+        "description": "One day and what is scheduled on it",
+        "properties": {
+          "date": {
+            "format": "date",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/Entry"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "EmailVerificationRequest": {
+        "description": "Consumption of an e-mail verification token",
+        "properties": {
+          "token": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "EnrollmentResponse": {
+        "description": "A student's membership of a classroom",
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "classroomId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endedReason": {
+            "enum": [
+              "STUDENT_LEFT",
+              "TEACHER_REMOVED",
+              "CLASSROOM_ARCHIVED",
+              "CONSENT_REVOKED"
+            ],
+            "type": "string"
+          },
+          "enrolledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Entry": {
+        "description": "A scheduled session and the session that executed it, if any",
+        "properties": {
+          "execution": {
+            "$ref": "#/components/schemas/Execution"
+          },
+          "kind": {
+            "enum": [
+              "STUDY",
+              "REVISION"
+            ],
+            "type": "string"
+          },
+          "plannedDurationMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "plannedSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectName": {
+            "type": "string"
+          },
+          "topicId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "topicName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ErasureRequestView": {
+        "properties": {
+          "cancelledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "effectiveAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "REQUESTED",
+              "COMPLETED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Execution": {
+        "description": "The most recent attempt at a scheduled session",
+        "properties": {
+          "actualDurationMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "durationSource": {
+            "enum": [
+              "MEASURED",
+              "SELF_REPORTED"
+            ],
+            "type": "string"
+          },
+          "recallRating": {
+            "enum": [
+              "AGAIN",
+              "HARD",
+              "GOOD",
+              "EASY"
+            ],
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "IN_PROGRESS",
+              "COMPLETED",
+              "ABANDONED"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GenerationRequestResponse": {
+        "description": "A plan generation job",
+        "properties": {
+          "attemptCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "failureReason": {
+            "enum": [
+              "CORE_UNAVAILABLE",
+              "CORE_REJECTED",
+              "NOTHING_TO_PLAN",
+              "INTERNAL"
+            ],
+            "type": "string"
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "horizonEnd": {
+            "format": "date",
+            "type": "string"
+          },
+          "horizonStart": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "progress": {
+            "format": "double",
+            "type": "number"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "READY",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GoalRequest": {
+        "description": "A subject the student intends to get through",
+        "properties": {
+          "priority": {
+            "default": 3,
+            "format": "int32",
+            "maximum": 5,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetDate": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subjectId"
+        ],
+        "type": "object"
+      },
+      "GoalResponse": {
+        "description": "A subject the student intends to get through",
+        "properties": {
+          "closedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "priority": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "ACHIEVED",
+              "ABANDONED"
+            ],
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetDate": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GoalRevisionRequest": {
+        "description": "What an existing goal asks for",
+        "properties": {
+          "priority": {
+            "format": "int32",
+            "maximum": 5,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "targetDate": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "priority"
+        ],
+        "type": "object"
+      },
+      "InvitePreviewResponse": {
+        "description": "What accepting an invite discloses, shown before the student accepts",
+        "properties": {
+          "classroomId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "institutionName": {
+            "type": "string"
+          },
+          "requiresConsent": {
+            "type": "string"
+          },
+          "subjectNames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/VisibilityDescription"
+          }
+        },
+        "type": "object"
+      },
+      "InviteRequest": {
+        "description": "An invite to issue",
+        "properties": {
+          "lifetime": {
+            "description": "ISO-8601 duration. Omit for the configured default",
+            "example": "P14D",
+            "type": "string"
+          },
+          "maxUses": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "InviteResponse": {
+        "description": "An invite, with its code",
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxUses": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "useCount": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "LoginRequest": {
+        "description": "Credential presented to open a session",
+        "properties": {
+          "email": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "PasswordChangeRequest": {
+        "description": "Change of password by the signed-in holder",
+        "properties": {
+          "currentPassword": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": "string"
+          },
+          "newPassword": {
+            "maxLength": 256,
+            "minLength": 12,
+            "type": "string"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object"
+      },
+      "PasswordResetConfirmation": {
+        "description": "Completion of a password reset",
+        "properties": {
+          "newPassword": {
+            "maxLength": 256,
+            "minLength": 12,
+            "type": "string"
+          },
+          "token": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "newPassword",
+          "token"
+        ],
+        "type": "object"
+      },
+      "PasswordResetRequest": {
+        "description": "Request of a password reset",
+        "properties": {
+          "email": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "PersonalDataExport": {
+        "properties": {
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "modules": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "items": { },
+                "type": "array"
+              },
+              "type": "object"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "PlanSummaryView": {
+        "description": "A study plan summarised: scheduled time, its breakdown, and adherence",
+        "properties": {
+          "adherence": {
+            "$ref": "#/components/schemas/Adherence"
+          },
+          "bySubject": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectPlan"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fitness": {
+            "additionalProperties": { },
+            "description": "How the optimisation core judged the plan, as it reported it: the terms it declared, with their values and weights, and whatever else it reported about the run. Not interpreted by this API; a term the core did not report is absent, not zero",
+            "type": "object"
+          },
+          "horizonEnd": {
+            "format": "date",
+            "type": "string"
+          },
+          "horizonStart": {
+            "format": "date",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "SUPERSEDED"
+            ],
+            "type": "string"
+          },
+          "supersededByPlanId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "totalPlannedMinutes": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PlannedSessionResponse": {
+        "description": "A session the optimisation core scheduled",
+        "properties": {
+          "durationMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "STUDY",
+              "REVISION"
+            ],
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "scheduledStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sequenceIndex": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "topicId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Point": {
+        "description": "One recall rating and when it was given",
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "rating": {
+            "enum": [
+              "AGAIN",
+              "HARD",
+              "GOOD",
+              "EASY"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProblemDetails": {
+        "description": "RFC 7807 error body, served as application/problem+json",
+        "properties": {
+          "detail": {
+            "description": "Fixed explanation of the error type; it never quotes the request",
+            "type": "string"
+          },
+          "errors": {
+            "description": "Only when type is urn:sinapse:problem:validation-failed: the offending fields, ordered by field and then by message",
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array"
+          },
+          "instance": {
+            "description": "Path of the request that failed, without the query string",
+            "format": "uri",
+            "type": "string"
+          },
+          "status": {
+            "description": "HTTP status of the response",
+            "format": "int32",
+            "type": "integer"
+          },
+          "title": {
+            "description": "Short summary of the error type, the same on every occurrence",
+            "type": "string"
+          },
+          "type": {
+            "description": "Stable identifier of the error type, urn:sinapse:problem:<code>; a client tells errors apart by this member",
+            "example": "urn:sinapse:problem:resource-not-found",
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail",
+          "instance",
+          "status",
+          "title",
+          "type"
+        ],
+        "type": "object"
+      },
+      "ReaffirmationRequest": {
+        "description": "Reaffirmation of consent in the holder's own name",
+        "properties": {
+          "token": {
+            "description": "Present only when the caller is not signed in",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RegistrationRequest": {
+        "description": "Registration of a new account, with the consents given at the time",
+        "properties": {
+          "acceptedTerms": {
+            "items": {
+              "$ref": "#/components/schemas/TermsAcceptance"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "dateOfBirth": {
+            "description": "Self-declared. Registration below the configured consent age is refused in this version",
+            "example": "2001-04-17",
+            "format": "date",
+            "type": "string"
+          },
+          "email": {
+            "example": "aluno@example.com",
+            "format": "email",
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 256,
+            "minLength": 12,
+            "type": "string"
+          },
+          "timeZone": {
+            "example": "America/Sao_Paulo",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "acceptedTerms",
+          "dateOfBirth",
+          "email",
+          "password",
+          "timeZone"
+        ],
+        "type": "object"
+      },
+      "RegistrationResponse": {
+        "description": "Identifier and state of a newly registered account",
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING_VERIFICATION",
+              "PENDING_GUARDIAN_CONSENT",
+              "ACTIVE",
+              "SUSPENDED",
+              "ANONYMIZED"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RetroactiveSessionRequest": {
+        "description": "A study session that already happened",
+        "properties": {
+          "actualDurationMinutes": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "STUDY",
+              "REVISION"
+            ],
+            "type": "string"
+          },
+          "plannedSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "recallRating": {
+            "enum": [
+              "AGAIN",
+              "HARD",
+              "GOOD",
+              "EASY"
+            ],
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "topicId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actualDurationMinutes",
+          "kind",
+          "recallRating",
+          "startedAt",
+          "topicId"
+        ],
+        "type": "object"
+      },
+      "SessionResponse": {
+        "description": "An opened session and the opaque token that identifies it",
+        "properties": {
+          "absoluteExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SessionSummary": {
+        "description": "A session of the caller",
+        "properties": {
+          "absoluteExpiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StartSessionRequest": {
+        "description": "A study session to start",
+        "properties": {
+          "kind": {
+            "enum": [
+              "STUDY",
+              "REVISION"
+            ],
+            "type": "string"
+          },
+          "plannedDurationMinutes": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "plannedSessionId": {
+            "description": "Omit when the student is studying on their own initiative",
+            "format": "uuid",
+            "type": "string"
+          },
+          "topicId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "topicId"
+        ],
+        "type": "object"
+      },
+      "Student": {
+        "description": "One student's figures for the class list",
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "adherenceRatio": {
+            "format": "double",
+            "type": "number"
+          },
+          "totalMinutes": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "StudentPanelSessionSummary": {
+        "description": "One executed study session",
+        "properties": {
+          "actualDurationMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "durationSource": {
+            "enum": [
+              "MEASURED",
+              "SELF_REPORTED"
+            ],
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "STUDY",
+              "REVISION"
+            ],
+            "type": "string"
+          },
+          "recallRating": {
+            "enum": [
+              "AGAIN",
+              "HARD",
+              "GOOD",
+              "EASY"
+            ],
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "FROM_PLAN",
+              "SELF_DIRECTED"
+            ],
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "IN_PROGRESS",
+              "COMPLETED",
+              "ABANDONED"
+            ],
+            "type": "string"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectName": {
+            "type": "string"
+          },
+          "topicId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "topicName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StudentPanelView": {
+        "description": "A teacher's view of one student over a window",
+        "properties": {
+          "accountId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "adherence": {
+            "$ref": "#/components/schemas/Adherence"
+          },
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "minutesBySubject": {
+            "items": {
+              "$ref": "#/components/schemas/SubjectMinutes"
+            },
+            "type": "array"
+          },
+          "recallTrajectory": {
+            "items": {
+              "$ref": "#/components/schemas/TopicTrajectory"
+            },
+            "type": "array"
+          },
+          "recentSessions": {
+            "items": {
+              "$ref": "#/components/schemas/StudentPanelSessionSummary"
+            },
+            "type": "array"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StudentStateView": {
+        "description": "Everything the initial screen needs to decide what to show",
+        "properties": {
+          "accountStatus": {
+            "enum": [
+              "PENDING_VERIFICATION",
+              "PENDING_GUARDIAN_CONSENT",
+              "ACTIVE",
+              "SUSPENDED",
+              "ANONYMIZED"
+            ],
+            "type": "string"
+          },
+          "activeGenerationJobId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "activePlanId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "openSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "pendingConsents": {
+            "items": {
+              "enum": [
+                "LEARNING_DATA_PROCESSING",
+                "INSTITUTION_SHARING",
+                "ACADEMIC_RESEARCH"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "requiresMajorityReaffirmation": {
+            "type": "boolean"
+          },
+          "setupComplete": {
+            "type": "boolean"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StudyPlanResponse": {
+        "description": "A generated study plan",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fitness": {
+            "additionalProperties": { },
+            "description": "How the optimisation core judged the plan, as it reported it: the terms it declared, with their values and weights, and whatever else it reported about the run. Not interpreted by this API; a term the core did not report is absent, not zero",
+            "type": "object"
+          },
+          "generationRequestId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "horizonEnd": {
+            "format": "date",
+            "type": "string"
+          },
+          "horizonStart": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "SUPERSEDED"
+            ],
+            "type": "string"
+          },
+          "supersededAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "supersededByPlanId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StudySessionResponse": {
+        "description": "An executed study session",
+        "properties": {
+          "actualDurationMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "durationSource": {
+            "enum": [
+              "MEASURED",
+              "SELF_REPORTED"
+            ],
+            "type": "string"
+          },
+          "endedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "STUDY",
+              "REVISION"
+            ],
+            "type": "string"
+          },
+          "plannedDurationMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "plannedSessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "recallRating": {
+            "enum": [
+              "AGAIN",
+              "HARD",
+              "GOOD",
+              "EASY"
+            ],
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "FROM_PLAN",
+              "SELF_DIRECTED"
+            ],
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "IN_PROGRESS",
+              "COMPLETED",
+              "ABANDONED"
+            ],
+            "type": "string"
+          },
+          "topicId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SubjectMinutes": {
+        "description": "Effective time on one subject",
+        "properties": {
+          "minutes": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "sessionCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SubjectPlan": {
+        "description": "The share of a plan belonging to one subject",
+        "properties": {
+          "plannedMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "sessionCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "subjectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "subjectName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SubjectResponse": {
+        "description": "A subject of the catalogue",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "TeacherAccessPeriod": {
+        "properties": {
+          "classroomId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "classroomName": {
+            "type": "string"
+          },
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "open": {
+            "type": "boolean"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TermsAcceptance": {
+        "properties": {
+          "purpose": {
+            "enum": [
+              "LEARNING_DATA_PROCESSING",
+              "INSTITUTION_SHARING",
+              "ACADEMIC_RESEARCH"
+            ],
+            "type": "string"
+          },
+          "termsVersionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "termsVersionId"
+        ],
+        "type": "object"
+      },
+      "TermsVersionSummary": {
+        "description": "A published wording of the consent terms",
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "LEARNING_DATA_PROCESSING",
+              "INSTITUTION_SHARING",
+              "ACADEMIC_RESEARCH"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TopicResponse": {
+        "description": "A topic of a subject",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "TopicTrajectory": {
+        "description": "Recall ratings for one topic over time",
+        "properties": {
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/Point"
+            },
+            "type": "array"
+          },
+          "topicId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "topicName": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ValidationError": {
+        "description": "One offending field of a validation failure",
+        "properties": {
+          "field": {
+            "description": "Name of the field in the request contract, or \"request\" for the request as a whole",
+            "type": "string"
+          },
+          "message": {
+            "description": "Message of the violated constraint; it never quotes the value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "message"
+        ],
+        "type": "object"
+      },
+      "VisibilityDescription": {
+        "description": "What the teacher will be able to see",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "subjectIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Backend of the Sinapse platform: identity, curriculum, educational relationships, learning record and study planning.\n\nEvery route lives under /api/v1. Errors follow RFC 7807 and are served as application/problem+json. Instants are ISO-8601 with offset; local times are interpreted in the account's time zone.",
+    "license": {
+      "identifier": "MIT",
+      "name": "MIT"
+    },
+    "title": "Sinapse Platform API",
+    "version": "normalised"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/accounts": {
+      "post": {
+        "description": "The account is created awaiting verification of its address. In this version an account holder below the configured consent age is refused: the guardian branch of the consent model exists in the schema but its flow is not implemented.",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationResponse"
+                }
+              }
+            },
+            "description": "Account registered"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Body rejected, with the offending fields"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Address already registered, or the accepted wording is no longer the one in force"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Account holder below the consent age"
+          }
+        },
+        "summary": "Registers an account and records the consents given with it",
+        "tags": [
+          "Accounts"
+        ]
+      }
+    },
+    "/api/v1/availability": {
+      "get": {
+        "description": "Without a date this returns every window ever declared, closed ones included, which is what lets a client show the routine and its history. The date is supplied by the caller rather than defaulted to today, because these are local times in the account's own zone and the server does not decide what day it is for somebody else.",
+        "operationId": "availability",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "on",
+            "required": false,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AvailabilityResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The windows"
+          }
+        },
+        "summary": "Lists the caller's availability windows",
+        "tags": [
+          "Availability"
+        ]
+      },
+      "post": {
+        "description": "Times are local to the account's own zone and carry no offset. A window that would overlap one already declared for the same weekday is refused: overlapping windows would have whatever allocates study hours count the same hour twice.",
+        "operationId": "declare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityResponse"
+                }
+              }
+            },
+            "description": "Window declared"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The window closes before it opens, or stops applying before it applied"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "This account's learning data may not be processed"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "It would overlap an existing window"
+          }
+        },
+        "summary": "Declares a weekly availability window",
+        "tags": [
+          "Availability"
+        ]
+      }
+    },
+    "/api/v1/availability/{windowId}/closure": {
+      "post": {
+        "description": "The window stays on record and keeps saying what it said for the period it covered. That is what a past plan was generated against.",
+        "operationId": "close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "windowId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityClosureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityResponse"
+                }
+              }
+            },
+            "description": "Window closed"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such window for this account"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The window is already closed"
+          }
+        },
+        "summary": "Closes an availability window",
+        "tags": [
+          "Availability"
+        ]
+      }
+    },
+    "/api/v1/classrooms": {
+      "get": {
+        "operationId": "classrooms",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClassroomResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The classrooms, archived ones included"
+          }
+        },
+        "summary": "Lists the classrooms the caller owns",
+        "tags": [
+          "Classrooms"
+        ]
+      },
+      "post": {
+        "description": "The subjects declare which ones carry an institutional deadline, which is input for the optimisation core. They do not decide what the teacher will see: that is the visibility scope, and today it is everything.",
+        "operationId": "openClassroom",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassroomRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomResponse"
+                }
+              }
+            },
+            "description": "Classroom opened"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The caller is not a teacher, or has no teacher record"
+          }
+        },
+        "summary": "Opens a classroom",
+        "tags": [
+          "Classrooms"
+        ]
+      }
+    },
+    "/api/v1/classrooms/{classroomId}/archival": {
+      "post": {
+        "description": "Ends every active enrollment and revokes every outstanding invite, in the same transaction. The enrollments are not deleted: they are what justifies the access the teacher had while the classroom was open.",
+        "operationId": "archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classroomId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomResponse"
+                }
+              }
+            },
+            "description": "Classroom archived"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such classroom for this teacher"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "It is already archived"
+          }
+        },
+        "summary": "Archives a classroom",
+        "tags": [
+          "Classrooms"
+        ]
+      }
+    },
+    "/api/v1/classrooms/{classroomId}/enrollments": {
+      "get": {
+        "description": "Enrollment management, and distinct from the class list of section 3.6 of the API contract: it shows every student who is in the classroom, including one who has withdrawn their sharing consent, because removing them has to remain possible.",
+        "operationId": "classroomEnrollments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classroomId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EnrollmentResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The active enrollments"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such classroom for this teacher"
+          }
+        },
+        "summary": "Lists the enrollments currently open in a classroom",
+        "tags": [
+          "Classrooms"
+        ]
+      }
+    },
+    "/api/v1/classrooms/{classroomId}/invites": {
+      "get": {
+        "description": "Codes are returned in clear. That is why they are stored in clear, and why this route is restricted to the classroom's own teacher.",
+        "operationId": "invites",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classroomId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InviteResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The invites"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such classroom for this teacher"
+          }
+        },
+        "summary": "Lists the invites of a classroom",
+        "tags": [
+          "Invites"
+        ]
+      },
+      "post": {
+        "description": "Ten characters of Crockford base32, about fifty bits. Expiry is mandatory; omitting the lifetime uses the configured default rather than making the code permanent.",
+        "operationId": "issue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classroomId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteResponse"
+                }
+              }
+            },
+            "description": "Invite issued"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The requested lifetime is out of range"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such classroom for this teacher"
+          }
+        },
+        "summary": "Issues an invite for a classroom",
+        "tags": [
+          "Invites"
+        ]
+      }
+    },
+    "/api/v1/classrooms/{classroomId}/students": {
+      "get": {
+        "description": "Three fields per student, computed on demand over the requested window. Students who have withdrawn their sharing consent are absent rather than present with the figures blanked out. Returned whole, with a hard server-side cap: a classroom is naturally small and this API has no generic pagination.",
+        "operationId": "classroomRoster",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classroomId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomRosterView"
+                }
+              }
+            },
+            "description": "The class list"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The window is empty, inverted or wider than the server will answer"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The caller does not hold the teacher role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such classroom for this caller"
+          }
+        },
+        "summary": "Lists the students of a classroom with adherence and total time",
+        "tags": [
+          "Classroom screens"
+        ]
+      }
+    },
+    "/api/v1/classrooms/{classroomId}/students/{accountId}": {
+      "delete": {
+        "description": "Ends the enrollment. Nothing is deleted, and the teacher's access to that student stops at the next request.",
+        "operationId": "removeStudent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classroomId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Student removed"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such classroom for this teacher, or the student is not in it"
+          }
+        },
+        "summary": "Removes a student from a classroom",
+        "tags": [
+          "Classrooms"
+        ]
+      }
+    },
+    "/api/v1/classrooms/{classroomId}/students/{accountId}/panel": {
+      "get": {
+        "description": "The student's whole record over the window, not only the part belonging to this teacher's subjects: the scope is integral by decision P1, and the student is told so before accepting the invite. Requires an active enrollment and a valid INSTITUTION_SHARING consent, both read at the moment of the request.",
+        "operationId": "panel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "classroomId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentPanelView"
+                }
+              }
+            },
+            "description": "The panel"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The window is empty, inverted or wider than the server will answer"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The caller does not hold the teacher role"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The classroom is not the caller's, or the student is not currently readable by them"
+          }
+        },
+        "summary": "Reads one student's adherence, effort and recall over a window",
+        "tags": [
+          "Classroom screens"
+        ]
+      }
+    },
+    "/api/v1/consents": {
+      "get": {
+        "description": "Includes withdrawn records: the holder is entitled to see what they consented to and when they took it back.",
+        "operationId": "consentHistory",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The history"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          }
+        },
+        "summary": "Lists the caller's own consent history",
+        "tags": [
+          "Consent"
+        ]
+      },
+      "post": {
+        "description": "The grantor is not submitted: it is derived from the holder's age at this moment, read in the holder's own time zone.",
+        "operationId": "grant",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Consent recorded"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The purpose already has a consent in force, or the accepted wording is no longer the one published"
+          }
+        },
+        "summary": "Consents to one purpose",
+        "tags": [
+          "Consent"
+        ]
+      }
+    },
+    "/api/v1/consents/reaffirmation": {
+      "post": {
+        "description": "Writes a new consent record in the holder's own name and withdraws the one a guardian had granted, in one transaction. The previous record is preserved. Either a token or a session identifies the holder.",
+        "operationId": "reaffirm",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReaffirmationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Consent reaffirmed"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Neither a token nor a usable session"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Token unknown, expired or already used"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The account is in a state that cannot reaffirm, or the holder has not reached the consent age"
+          }
+        },
+        "summary": "Reaffirms consent after reaching the consent age",
+        "tags": [
+          "Consent"
+        ]
+      }
+    },
+    "/api/v1/consents/{purpose}": {
+      "delete": {
+        "description": "Nothing is deleted: the record gains a withdrawal timestamp. Withdrawing an essential purpose suspends the account and ends its sessions, in the same transaction. Withdrawing ACADEMIC_RESEARCH has no effect on the service.",
+        "operationId": "revokeConsent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "purpose",
+            "required": true,
+            "schema": {
+              "enum": [
+                "LEARNING_DATA_PROCESSING",
+                "INSTITUTION_SHARING",
+                "ACADEMIC_RESEARCH"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Consent withdrawn"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No consent in force for that purpose"
+          }
+        },
+        "summary": "Withdraws the consent in force for one purpose",
+        "tags": [
+          "Consent"
+        ]
+      }
+    },
+    "/api/v1/email-verifications": {
+      "post": {
+        "description": "Single use. Verifying the address is what moves an account holder of age to ACTIVE, provided the essential consents are in force.",
+        "operationId": "verifyEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVerificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Address verified"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Token unknown, expired or already used"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Consumes an e-mail verification token",
+        "tags": [
+          "Accounts"
+        ]
+      }
+    },
+    "/api/v1/enrollments": {
+      "get": {
+        "description": "Ended memberships are included: they are the record of which teachers had access to this student's data, and when it stopped.",
+        "operationId": "enrollments",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EnrollmentResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The memberships"
+          }
+        },
+        "summary": "Lists the caller's own memberships of classrooms",
+        "tags": [
+          "Enrollments"
+        ]
+      }
+    },
+    "/api/v1/enrollments/{enrollmentId}": {
+      "delete": {
+        "description": "Ends the membership. Nothing is deleted: the record is what justifies the access the teacher had while it was active.",
+        "operationId": "leave",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "enrollmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Left the classroom"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such active membership for this caller"
+          }
+        },
+        "summary": "Leaves a classroom",
+        "tags": [
+          "Enrollments"
+        ]
+      }
+    },
+    "/api/v1/goals": {
+      "get": {
+        "description": "Closed goals included, because what was abandoned is part of what the student has decided. The status says which is which.",
+        "operationId": "goals",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GoalResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The goals"
+          }
+        },
+        "summary": "Lists the caller's goals",
+        "tags": [
+          "Goals"
+        ]
+      },
+      "post": {
+        "description": "The target date is a prioritisation constraint and not the plan horizon: preparation can run for a year, and generating a year of plan would be expensive and mostly wrong. At most one active goal per subject.",
+        "operationId": "set",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            },
+            "description": "Goal set"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such subject"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "There is already an active goal for that subject"
+          }
+        },
+        "summary": "Sets a goal for a subject",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/v1/goals/{goalId}": {
+      "patch": {
+        "description": "The subject cannot change: a goal about another subject is another goal, and repointing one would move the record of an abandoned subject onto a new one.",
+        "operationId": "revise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalRevisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            },
+            "description": "Goal revised"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such goal for this account"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The goal has already been closed"
+          }
+        },
+        "summary": "Revises an active goal",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/v1/goals/{goalId}/abandonment": {
+      "post": {
+        "description": "Not a deletion. The goal stays, with the instant the student stopped pursuing it, and the subject becomes free for a new goal.",
+        "operationId": "abandonGoal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            },
+            "description": "Goal abandoned"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such goal for this account"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The goal has already been closed"
+          }
+        },
+        "summary": "Abandons a goal",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/v1/goals/{goalId}/achievement": {
+      "post": {
+        "operationId": "achieve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalResponse"
+                }
+              }
+            },
+            "description": "Goal achieved"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such goal for this account"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The goal has already been closed"
+          }
+        },
+        "summary": "Marks a goal as achieved",
+        "tags": [
+          "Goals"
+        ]
+      }
+    },
+    "/api/v1/invites/{code}/preview": {
+      "get": {
+        "description": "A requirement of ADR 0005 rather than a courtesy. The visibility scope is integral — the teacher sees the student's whole history and plan — and a consent to that which is not shown at the moment of deciding is not informed consent.",
+        "operationId": "preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitePreviewResponse"
+                }
+              }
+            },
+            "description": "What the code admits to"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The code admits to nothing: unknown, expired, revoked, exhausted, or its classroom is archived. The five answer identically on purpose"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Shows what accepting an invite would disclose",
+        "tags": [
+          "Invites"
+        ]
+      }
+    },
+    "/api/v1/invites/{code}/redemptions": {
+      "post": {
+        "description": "Requires an active account with a valid INSTITUTION_SHARING consent, granted separately after reading the preview. A teacher cannot redeem an invite to their own classroom.",
+        "operationId": "redeem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentResponse"
+                }
+              }
+            },
+            "description": "Enrolled"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The account may not share its data with an institution"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The code admits to nothing"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Already enrolled, or the caller owns the classroom"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Redeems an invite and joins the classroom",
+        "tags": [
+          "Invites"
+        ]
+      }
+    },
+    "/api/v1/invites/{inviteId}": {
+      "delete": {
+        "operationId": "revokeInvite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inviteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Invite revoked"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such invite for this teacher"
+          }
+        },
+        "summary": "Revokes an invite",
+        "tags": [
+          "Invites"
+        ]
+      }
+    },
+    "/api/v1/me/access-disclosure": {
+      "get": {
+        "description": "Derived from the memberships, because a membership is the only thing that grants a teacher access. A period is an upper bound: access also requires a valid INSTITUTION_SHARING consent at the moment of each read, and withdrawing that cuts it off without ending the membership.",
+        "operationId": "accessDisclosure",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TeacherAccessPeriod"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The periods"
+          }
+        },
+        "summary": "Lists who could read the caller's data, and when",
+        "tags": [
+          "Data subject rights"
+        ]
+      }
+    },
+    "/api/v1/me/agenda": {
+      "get": {
+        "description": "Each scheduled slot carries the topic and subject names and the session that executed it, if any. Days are grouped in the holder's own time zone. The window is mandatory and its span is capped: this API has no generic pagination, by decision.",
+        "operationId": "agenda",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyAgendaView"
+                }
+              }
+            },
+            "description": "The agenda"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The window is empty, inverted or wider than the server will answer"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The account's learning data may not be processed"
+          }
+        },
+        "summary": "The caller's planned sessions of a window, grouped by day",
+        "tags": [
+          "My screens"
+        ]
+      }
+    },
+    "/api/v1/me/data-export": {
+      "get": {
+        "description": "Assembled from each module, keyed by module. Delivered through this authenticated download and never by e-mail: a mailbox is not a place to put somebody's whole study history. Rate limited, because assembling it reads every table that mentions the holder.",
+        "operationId": "exportMyData",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalDataExport"
+                }
+              }
+            },
+            "description": "The holder's data"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Downloads everything the platform holds about the caller",
+        "tags": [
+          "Data subject rights"
+        ]
+      }
+    },
+    "/api/v1/me/erasure-requests": {
+      "get": {
+        "description": "Including withdrawn and failed ones. None of them carries a copy of anything that was erased.",
+        "operationId": "erasureRequests",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ErasureRequestView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The requests"
+          }
+        },
+        "summary": "Lists the caller's erasure requests",
+        "tags": [
+          "Data subject rights"
+        ]
+      },
+      "post": {
+        "description": "The account is suspended and its sessions revoked at once; the erasure itself happens after a configured window, and can be withdrawn until then. Signing in still works during the window, and does nothing but let the holder withdraw the request or take their data.",
+        "operationId": "requestErasure",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasureRequestView"
+                }
+              }
+            },
+            "description": "Erasure requested"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "There is already an open request"
+          }
+        },
+        "summary": "Asks for this account to be erased",
+        "tags": [
+          "Data subject rights"
+        ]
+      }
+    },
+    "/api/v1/me/erasure-requests/{requestId}/cancellation": {
+      "post": {
+        "description": "Puts the account back to active, provided its essential consent is still valid. After the window has elapsed there is nothing to withdraw.",
+        "operationId": "cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasureRequestView"
+                }
+              }
+            },
+            "description": "Request withdrawn"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such request for this account"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The request has already been carried out, withdrawn or failed"
+          }
+        },
+        "summary": "Withdraws an erasure request",
+        "tags": [
+          "Data subject rights"
+        ]
+      }
+    },
+    "/api/v1/me/state": {
+      "get": {
+        "description": "Composed from identity, planning and the learning record. A holder whose learning data may not be processed still gets an answer — that is how they learn the account is suspended — but the plan, the job, the open session and the readiness flag come back empty.",
+        "operationId": "myState",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentStateView"
+                }
+              }
+            },
+            "description": "The caller's state"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          }
+        },
+        "summary": "Everything the initial screen needs, in one call",
+        "tags": [
+          "My screens"
+        ]
+      }
+    },
+    "/api/v1/password-changes": {
+      "post": {
+        "description": "Every session of the account is ended, including the one that asked, so the client authenticates again with the password it just chose.",
+        "operationId": "change",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Password changed and sessions ended"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session, or the current password does not match"
+          }
+        },
+        "summary": "Changes the caller's password",
+        "tags": [
+          "Passwords"
+        ]
+      }
+    },
+    "/api/v1/password-resets": {
+      "post": {
+        "description": "Answers the same way whether or not the address is registered. The alternative turns this route into a way of testing who has an account here.",
+        "operationId": "requestReset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Request accepted"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Requests a password reset",
+        "tags": [
+          "Passwords"
+        ]
+      }
+    },
+    "/api/v1/password-resets/confirmation": {
+      "post": {
+        "description": "Single use. Every session of the account is ended in the same transaction.",
+        "operationId": "completeReset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetConfirmation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Password changed and sessions ended"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Token unknown, expired or already used"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Completes a password reset",
+        "tags": [
+          "Passwords"
+        ]
+      }
+    },
+    "/api/v1/planned-sessions": {
+      "get": {
+        "description": "The plan in force, not every plan the student has ever had: this is what there is to do. The window is mandatory and its span is capped, because planned sessions accumulate with every plan and there is no generic pagination in this API.",
+        "operationId": "plannedSessions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlannedSessionResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The sessions"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The window is empty, inverted or wider than the accepted maximum"
+          }
+        },
+        "summary": "Lists the caller's scheduled sessions in a window",
+        "tags": [
+          "Study plans"
+        ]
+      }
+    },
+    "/api/v1/sessions": {
+      "get": {
+        "operationId": "loginSessions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The sessions still usable"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          }
+        },
+        "summary": "Lists the caller's own sessions",
+        "tags": [
+          "Sessions"
+        ]
+      },
+      "post": {
+        "description": "Answers with an opaque token, both as an HttpOnly, Secure, SameSite=Strict cookie for browsers and in the body for clients that send it back as Authorization: Bearer. Not a JWT: an account suspended by a consent revocation has to stop working on the next request, not at the next expiry.",
+        "operationId": "openLoginSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            },
+            "description": "Session opened"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Credential refused. The same answer is given for an unknown address, a wrong password and an account that is not active"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Opens a session",
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/current": {
+      "delete": {
+        "operationId": "endCurrent",
+        "responses": {
+          "204": {
+            "description": "Session ended"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          }
+        },
+        "summary": "Ends the session the request arrived on",
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/v1/sessions/{sessionId}": {
+      "delete": {
+        "description": "A session of another account answers the same way as one that does not exist, so that the route cannot be used to discover somebody else's sessions.",
+        "operationId": "end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session ended"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such session for this caller"
+          }
+        },
+        "summary": "Ends one of the caller's sessions",
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/api/v1/study-plans": {
+      "get": {
+        "description": "The supersession chain is readable from the result: each superseded plan carries the identifier of the one that replaced it, and when it was replaced. Returned whole, with a hard ceiling, because re-planning is manual and this list grows in single figures.",
+        "operationId": "planHistory",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StudyPlanResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The plans"
+          }
+        },
+        "summary": "Lists the caller's plans",
+        "tags": [
+          "Study plans"
+        ]
+      }
+    },
+    "/api/v1/study-plans/current": {
+      "get": {
+        "description": "At most one exists. A student with no plan yet has not run the generation job, or its last run has not finished.",
+        "operationId": "currentPlan",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyPlanResponse"
+                }
+              }
+            },
+            "description": "The active plan"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "There is no active plan"
+          }
+        },
+        "summary": "The caller's active plan",
+        "tags": [
+          "Study plans"
+        ]
+      }
+    },
+    "/api/v1/study-plans/generation-requests": {
+      "post": {
+        "description": "Returns immediately with a job to poll; it never waits for the core. The horizon is configured and is not the client's to choose. One unfinished job per account, and availability and at least one goal have to exist first.",
+        "operationId": "requestPlanGeneration",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationRequestResponse"
+                }
+              }
+            },
+            "description": "Job queued"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "This account's learning data may not be processed"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "A job is already running, or there is nothing to plan yet"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Asks the optimiser for a plan",
+        "tags": [
+          "Plan generation"
+        ]
+      }
+    },
+    "/api/v1/study-plans/generation-requests/{requestId}": {
+      "get": {
+        "description": "Polled, because there is no event notification in this version. Once the status is READY the response carries the identifier of the plan. The progress field is absent whenever it is indeterminate, which in this version is always: the core reports none, and nothing here invents one.",
+        "operationId": "planGenerationRequest",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationRequestResponse"
+                }
+              }
+            },
+            "description": "The job"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such job for this account"
+          }
+        },
+        "summary": "The state of a generation job",
+        "tags": [
+          "Plan generation"
+        ]
+      }
+    },
+    "/api/v1/study-plans/{planId}": {
+      "get": {
+        "operationId": "plan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyPlanResponse"
+                }
+              }
+            },
+            "description": "The plan"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such plan for this account"
+          }
+        },
+        "summary": "Reads one of the caller's plans",
+        "tags": [
+          "Study plans"
+        ]
+      }
+    },
+    "/api/v1/study-plans/{planId}/sessions": {
+      "get": {
+        "description": "The whole plan, in sequence. This is how the sessions of a superseded plan are read: they are preserved untouched, because executed study sessions reference them.",
+        "operationId": "sessionsOfPlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlannedSessionResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The sessions"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such plan for this account"
+          }
+        },
+        "summary": "Lists the sessions of one plan",
+        "tags": [
+          "Study plans"
+        ]
+      }
+    },
+    "/api/v1/study-plans/{planId}/summary": {
+      "get": {
+        "description": "Total scheduled time, the breakdown by subject, and adherence over the part of the plan that has already fallen due. A session still in the future is not counted as missed, and the ratio is absent rather than zero when nothing has fallen due yet. Carries the optimisation core's fitness report as the core produced it.",
+        "operationId": "summary",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanSummaryView"
+                }
+              }
+            },
+            "description": "The summary"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No usable session on the request"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The account's learning data may not be processed"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such plan for this caller"
+          }
+        },
+        "summary": "Summarises one of the caller's plans",
+        "tags": [
+          "My screens"
+        ]
+      }
+    },
+    "/api/v1/study-sessions": {
+      "get": {
+        "description": "The window is mandatory and its span is capped. A history grows without limit and there is no generic pagination in this API, so an unbounded read would be a way of asking the server for everything.",
+        "operationId": "studySessions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StudySessionResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The sessions"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The window is empty, inverted or wider than the accepted maximum"
+          }
+        },
+        "summary": "Lists the caller's study sessions in a window",
+        "tags": [
+          "Study sessions"
+        ]
+      },
+      "post": {
+        "description": "The application times it, which is what makes the recorded duration measured rather than stated. At most one session runs at a time: the screen is expected to offer resuming the open one instead of being refused here.",
+        "operationId": "start",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudySessionResponse"
+                }
+              }
+            },
+            "description": "Session started"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "This account's learning data may not be processed"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such topic"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "A session is already running"
+          }
+        },
+        "summary": "Starts a study session",
+        "tags": [
+          "Study sessions"
+        ]
+      }
+    },
+    "/api/v1/study-sessions/current": {
+      "get": {
+        "description": "At most one exists. The initial screen reads this so that it can offer to resume rather than start a second one and be refused.",
+        "operationId": "currentStudySession",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudySessionResponse"
+                }
+              }
+            },
+            "description": "The running session"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Nothing is running"
+          }
+        },
+        "summary": "The caller's running session",
+        "tags": [
+          "Study sessions"
+        ]
+      }
+    },
+    "/api/v1/study-sessions/retroactive-entries": {
+      "post": {
+        "description": "The marked exception of decision F5. The duration is always stored as self-reported, so the two sets can be analysed apart. How far back this may reach is configured, and the route is rate limited per account.",
+        "operationId": "recordRetroactively",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetroactiveSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudySessionResponse"
+                }
+              }
+            },
+            "description": "Session recorded"
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The session is in the future or older than the accepted limit"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such topic"
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Rate limit exceeded"
+          }
+        },
+        "summary": "Records a study session after the fact",
+        "tags": [
+          "Study sessions"
+        ]
+      }
+    },
+    "/api/v1/study-sessions/{sessionId}/abandonment": {
+      "post": {
+        "description": "No rating and no duration. The student stopped, and the elapsed time of a session somebody walked away from measures nothing; what the record says is that it was opened and not finished.",
+        "operationId": "abandonStudySession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudySessionResponse"
+                }
+              }
+            },
+            "description": "Session abandoned"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such session for this account"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The session is already closed"
+          }
+        },
+        "summary": "Abandons a running session",
+        "tags": [
+          "Study sessions"
+        ]
+      }
+    },
+    "/api/v1/study-sessions/{sessionId}/completion": {
+      "post": {
+        "description": "The recall rating is required and exists only here: a session that was abandoned has none, and a session already closed cannot acquire one.",
+        "operationId": "complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudySessionResponse"
+                }
+              }
+            },
+            "description": "Session completed"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such session for this account"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "The session is already closed. A correction is a new record, not an edit"
+          }
+        },
+        "summary": "Completes a running session",
+        "tags": [
+          "Study sessions"
+        ]
+      }
+    },
+    "/api/v1/subjects": {
+      "get": {
+        "description": "The identifiers a goal is set against. Subjects have no curated order, so position is their rank in catalogue-code order, starting at 1.",
+        "operationId": "subjects",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SubjectResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The subjects"
+          }
+        },
+        "summary": "Lists the subjects of the catalogue",
+        "tags": [
+          "Catalogue"
+        ]
+      }
+    },
+    "/api/v1/subjects/{subjectId}/topics": {
+      "get": {
+        "description": "In curricular order. Also where a topic name is resolved for a client that only holds the topic's identifier.",
+        "operationId": "topics",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subjectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TopicResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The topics"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "No such subject"
+          }
+        },
+        "summary": "Lists the topics of a subject",
+        "tags": [
+          "Catalogue"
+        ]
+      }
+    },
+    "/api/v1/terms": {
+      "get": {
+        "description": "Open, because the screen that collects a registration has to show the full text before there is an account to attribute the reading to.",
+        "operationId": "terms",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TermsVersionSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The wordings, with their full text"
+          }
+        },
+        "summary": "Lists the published wordings of the consent terms",
+        "tags": [
+          "Consent"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "The caller's own memberships of classrooms",
+      "name": "Enrollments"
+    },
+    {
+      "description": "Registration and verification of an account",
+      "name": "Accounts"
+    },
+    {
+      "description": "Classrooms owned by a teacher",
+      "name": "Classrooms"
+    },
+    {
+      "description": "What the student intends to get through",
+      "name": "Goals"
+    },
+    {
+      "description": "Joining a classroom by code",
+      "name": "Invites"
+    },
+    {
+      "description": "Recording what was actually studied",
+      "name": "Study sessions"
+    },
+    {
+      "description": "Reset and change of a password",
+      "name": "Passwords"
+    },
+    {
+      "description": "When the student is free to study",
+      "name": "Availability"
+    },
+    {
+      "description": "Access, erasure, and who has seen your data",
+      "name": "Data subject rights"
+    },
+    {
+      "description": "The composed reads a student makes about themselves",
+      "name": "My screens"
+    },
+    {
+      "description": "What a teacher reads about their classroom",
+      "name": "Classroom screens"
+    },
+    {
+      "description": "Authentication and the caller's own sessions",
+      "name": "Sessions"
+    },
+    {
+      "description": "Terms, consent and its withdrawal",
+      "name": "Consent"
+    },
+    {
+      "description": "What the optimisation core scheduled",
+      "name": "Study plans"
+    },
+    {
+      "description": "Asking the optimiser for a plan",
+      "name": "Plan generation"
+    },
+    {
+      "description": "Subjects and topics of the curated catalogue",
+      "name": "Catalogue"
+    }
+  ]
+}

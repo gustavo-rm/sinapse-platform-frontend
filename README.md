@@ -19,10 +19,12 @@ premissa de arquitetura, não detalhe de implantação: a sessão viaja em um *c
 
 ### Estado
 
-**Fundação (FE-2).** A aplicação Angular existe: estrutura de pastas, fronteiras de arquitetura
-verificadas pelo *lint*, rotas preguiçosas por área com *layouts* público e do aluno, catálogo de
-rótulos, os quatro componentes de estado e o serviço de tempo. Ainda não há cliente de API nem tela
-de produto — chegam em FE-3 e FE-4. O detalhe está em [`docs/ai/STATE.md`](docs/ai/STATE.md).
+**Camada de API (FE-3).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
+*lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo), existe a
+camada de comunicação: o contrato OpenAPI do backend copiado para o repositório com seus tipos
+gerados, as 59 operações em `ApiRoutes`, o `ApiClient`, os interceptadores e a política de nova
+tentativa, testados contra MSW e contra o backend local. Ainda não há *store* de sessão, *guard*
+nem tela de produto — chegam em FE-4. O detalhe está em [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     a referência obrigatória de interface
@@ -32,7 +34,10 @@ src/styles/tokens.json    a fonte dos tokens
 src/styles/tokens.css     gerado de tokens.json — não editar à mão
 src/styles/sinapse.css    as classes dos componentes
 src/app/                  core, shared, features, layouts — ver CLAUDE.md §4
-scripts/                  gerador de tokens.css e testes em Node
+src/app/core/api/contract/ o contrato OpenAPI copiado do backend e seus tipos gerados
+src/testing/              MSW e fixtures gerados do contrato, só para testes
+tools/contract/           o gerador de tipos, isolado (ver ADR 0002)
+scripts/                  geradores de tokens.css e de schema.d.ts, e testes em Node
 ```
 
 ### Instalar, rodar e testar
@@ -42,16 +47,22 @@ Angular 22 declara. O npm é o que acompanha o Node.
 
 ```bash
 npm ci                 # instala exatamente o que está no package-lock.json
+npm run contract:install  # instala o gerador de tipos em tools/contract (uma vez)
 npm start              # servidor de desenvolvimento em http://localhost:4200
 npm run lint           # ESLint, incluindo as fronteiras de CLAUDE.md §6
 npm test               # testes unitários (Vitest) e os testes de scripts/ (Node)
 npm run build          # build de produção em dist/sinapse-web
 npm run tokens         # regenera src/styles/tokens.css a partir de tokens.json
 npm run tokens:check   # falha se tokens.css não for a regeneração de tokens.json
+npm run contract       # regenera schema.d.ts a partir do openapi.json copiado
+npm run contract:check # falha se schema.d.ts não for a regeneração do openapi.json
+npm run contract:compare-live  # compara com /api-docs de um backend local (perfil local)
 ```
 
-O CI (`.github/workflows/ci.yml`) roda `tokens:check`, `lint`, `test` e `build` a cada *push* e
-*pull request* para `develop` e `main`.
+`npm test` precisa do gerador instalado (`npm run contract:install`): um dos testes de `scripts/`
+regenera `schema.d.ts` e compara com o arquivo versionado. O CI (`.github/workflows/ci.yml`) roda
+`tokens:check`, `contract:check`, `lint`, `test` e `build` a cada *push* e *pull request* para
+`develop` e `main`. Como atualizar o contrato está em `docs/ai/CONTEXT.md`.
 
 TypeScript e Vitest estão fixados (`~6.0.3` e `~4.1.12`). **Não** rode `npm install
 typescript@latest`: a 7.x é incompatível com o Angular 22. Ver `CLAUDE.md` §3.
@@ -112,10 +123,12 @@ configuration.
 
 ### State
 
-**Foundation (FE-2).** The Angular application exists: folder structure, architecture boundaries
-checked by lint, lazy routes per area with the public and student layouts, the label catalogue, the
-four state components and the time service. There is no API client and no product screen yet —
-those come in FE-3 and FE-4. Details in [`docs/ai/STATE.md`](docs/ai/STATE.md).
+**API layer (FE-3).** On top of FE-2's foundation (structure, lint-checked boundaries, routes and
+layouts, label catalogue, state components, time service), the communication layer exists: the
+backend's OpenAPI contract vendored with its generated types, the 59 operations in `ApiRoutes`,
+`ApiClient`, the interceptors and the retry policy, tested against MSW and against the local
+backend. There is no session store, guard or product screen yet — those come in FE-4. Details in
+[`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     the binding interface reference
@@ -125,7 +138,10 @@ src/styles/tokens.json    the source of the tokens
 src/styles/tokens.css     generated from tokens.json — do not edit by hand
 src/styles/sinapse.css    the component classes
 src/app/                  core, shared, features, layouts — see CLAUDE.md §4
-scripts/                  tokens.css generator and Node tests
+src/app/core/api/contract/ the backend's vendored OpenAPI contract and its generated types
+src/testing/              MSW and fixtures generated from the contract, for tests only
+tools/contract/           the type generator, isolated (see ADR 0002)
+scripts/                  tokens.css and schema.d.ts generators, and Node tests
 ```
 
 ### Install, run and test
@@ -135,16 +151,23 @@ declares. npm is the one that ships with Node.
 
 ```bash
 npm ci                 # installs exactly what package-lock.json holds
+npm run contract:install  # installs the type generator in tools/contract (once)
 npm start              # development server on http://localhost:4200
 npm run lint           # ESLint, including the boundaries of CLAUDE.md §6
 npm test               # unit tests (Vitest) and the tests under scripts/ (Node)
 npm run build          # production build into dist/sinapse-web
 npm run tokens         # regenerates src/styles/tokens.css from tokens.json
 npm run tokens:check   # fails if tokens.css is not the regeneration of tokens.json
+npm run contract       # regenerates schema.d.ts from the vendored openapi.json
+npm run contract:check # fails if schema.d.ts is not the regeneration of openapi.json
+npm run contract:compare-live  # compares with /api-docs of a local backend (local profile)
 ```
 
-CI (`.github/workflows/ci.yml`) runs `tokens:check`, `lint`, `test` and `build` on every push and
-pull request to `develop` and `main`.
+`npm test` needs the generator installed (`npm run contract:install`): one of the tests under
+`scripts/` regenerates `schema.d.ts` and compares it with the committed file. CI
+(`.github/workflows/ci.yml`) runs `tokens:check`, `contract:check`, `lint`, `test` and `build` on
+every push and pull request to `develop` and `main`. How to refresh the contract is in
+`docs/ai/CONTEXT.md`.
 
 TypeScript and Vitest are pinned (`~6.0.3` and `~4.1.12`). **Do not** run `npm install
 typescript@latest`: 7.x is incompatible with Angular 22. See `CLAUDE.md` §3.

@@ -1,5 +1,5 @@
 import { SNAPSHOT } from '../../../testing/contract';
-import { ApiRoutes, ROUTE_TEMPLATES, routeTemplateOf } from './api-routes';
+import { ApiRoutes, DevProbeRoutes, ROUTE_TEMPLATES, routeTemplateOf } from './api-routes';
 
 describe('ApiRoutes', () => {
   const snapshotPaths = Object.keys(SNAPSHOT.paths);
@@ -12,6 +12,13 @@ describe('ApiRoutes', () => {
   it('holds no path the snapshot does not have (no invented route)', () => {
     const invented = ROUTE_TEMPLATES.filter((path) => !snapshotPaths.includes(path));
     expect(invented).toEqual([]);
+  });
+
+  it('keeps the development-only probe routes out of ApiRoutes and out of the snapshot', () => {
+    for (const probe of Object.values(DevProbeRoutes)) {
+      expect(snapshotPaths).not.toContain(probe);
+      expect(ROUTE_TEMPLATES).not.toContain(probe);
+    }
   });
 
   it('lists each path once', () => {

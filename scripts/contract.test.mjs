@@ -125,3 +125,13 @@ test('models.ts aliases every schema of the snapshot, under its own name, and no
     Object.keys(spec.components.schemas).sort(),
   );
 });
+
+test('the live-comparison normaliser writes the snapshot exactly as the backend does', async () => {
+  const { normalise } = await import('./compare-live-contract.mjs');
+  const snapshot = readFileSync(SNAPSHOT, 'utf8');
+  const live = JSON.parse(snapshot);
+  live.servers = [{ url: 'http://localhost:8080' }];
+  live.info.version = '0.1.0-SNAPSHOT';
+  live.paths['/api/v1/probe/ping'] = { get: {} };
+  assert.equal(normalise(live), snapshot);
+});

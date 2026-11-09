@@ -126,6 +126,20 @@ export const ApiRoutes = {
   },
 } as const;
 
+/**
+ * DEVELOPMENT ONLY. The diagnostic routes of the backend's `ProbeController`, which exists under
+ * the `local` and `test` profiles and nowhere else (a deployment answers 404). They are not in
+ * the snapshot, which is taken with no profile, and so not in `ApiRoutes`; `api-routes.spec.ts`
+ * holds them out of it. Used only by the opt-in check against a running local backend
+ * (`live-backend.spec.ts`). No feature may call them.
+ */
+export const DevProbeRoutes = {
+  ping: '/api/v1/probe/ping',
+  failure: '/api/v1/probe/failure',
+  validation: '/api/v1/probe/validation',
+  rateLimited: '/api/v1/probe/rate-limited',
+} as const;
+
 /** Every route of `ApiRoutes`, unexpanded, as the snapshot writes it. */
 export const ROUTE_TEMPLATES: readonly string[] = Object.values(ApiRoutes).flatMap((group) =>
   Object.values(group as Record<string, ApiRoute>).map((route) =>

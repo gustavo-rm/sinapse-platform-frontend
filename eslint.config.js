@@ -51,7 +51,13 @@ module.exports = defineConfig([
     extends: [eslint.configs.recommended],
     languageOptions: {
       sourceType: 'module',
-      globals: { console: 'readonly', process: 'readonly' },
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        structuredClone: 'readonly',
+      },
     },
   },
 ]);

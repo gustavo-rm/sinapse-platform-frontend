@@ -13,6 +13,7 @@
     "contract": "node scripts/generate-contract.mjs",
     "contract:check": "node scripts/generate-contract.mjs --check",
     "contract:install": "npm ci --prefix tools/contract",
+    "contract:compare-live": "node scripts/compare-live-contract.mjs",
     "test:scripts": "node --test \"scripts/*.test.mjs\""
   },
   "private": true,

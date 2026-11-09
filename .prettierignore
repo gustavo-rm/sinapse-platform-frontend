@@ -1,0 +1,3 @@
+# Generated or vendored: a reformat would break the drift checks of scripts/contract.test.mjs.
+src/app/core/api/contract/openapi.json
+src/app/core/api/contract/schema.d.ts

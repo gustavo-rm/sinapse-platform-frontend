@@ -1,9 +1,10 @@
 name: CI
 
-# Runs what a contributor runs locally before a pull request: the tokens.css regeneration check,
-# lint (with the architecture boundaries of CLAUDE.md §6), the unit and script tests, and the
-# production build. Any of them failing fails the job. Same shape as the backend's ci.yml, with
-# Node instead of Java and no service container: this client makes no HTTP call in its tests.
+# Runs what a contributor runs locally before a pull request: the tokens.css and schema.d.ts
+# regeneration checks, lint (with the architecture boundaries of CLAUDE.md §6), the unit and
+# script tests, and the production build. Any of them failing fails the job. Same shape as the
+# backend's ci.yml, with Node instead of Java and no service container: the tests reach no server,
+# MSW answers their HTTP calls in-process.
 #
 # This file alone does NOT block a merge. It makes the check exist and report. For it to block,
 # the job below has to be marked as a required status check in the branch protection of `develop`
@@ -40,10 +41,23 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tools/contract/package-lock.json
 
       # From the lockfile, exactly: TypeScript 6.0.x and Vitest 4.1.x as pinned in package.json.
       - name: Install
         run: npm ci
+
+      # The type generator lives apart from the application: openapi-typescript 7.13.x declares a
+      # peer typescript ^5.x and the application pins 6.0.x (ADR 0002). Needed by the contract
+      # check below and by scripts/contract.test.mjs.
+      - name: Install the contract generator
+        run: npm run contract:install
+
+      # schema.d.ts is generated from the vendored openapi.json and never edited by hand.
+      - name: schema.d.ts matches the vendored contract
+        run: npm run contract:check
 
       # tokens.css is generated from tokens.json and never edited by hand.
       - name: tokens.css matches tokens.json

@@ -8,7 +8,7 @@ export const SIGN_IN_PATH = '/entrar';
  * STUB, until the session store of FE-4. What `sessionExpiryInterceptor` calls when the server
  * says the session is gone (`urn:sinapse:problem:unauthenticated`).
  *
- * It holds the little session state this task needs, in memory only (`CLAUDE.md` §9: store
+ * It holds the little session state this task needs, in memory only (`CLAUDE.md`, *Session and time, in one place*: store
  * nothing, no `localStorage`): whether the session has ended, and the route the person was on, so
  * that signing in can take them back. FE-4 replaces the state with the real store, fed by
  * `GET /api/v1/me/state`, and keeps this contract: `expire()` acts once per session, however many

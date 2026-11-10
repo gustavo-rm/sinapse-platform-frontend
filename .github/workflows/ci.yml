@@ -1,7 +1,7 @@
 name: CI
 
 # Runs what a contributor runs locally before a pull request: the tokens.css and schema.d.ts
-# regeneration checks, lint (with the architecture boundaries of CLAUDE.md §6), the unit and
+# regeneration checks, lint (with the architecture boundaries of CLAUDE.md, *Architecture rules*), the unit and
 # script tests, and the production build. Any of them failing fails the job. Same shape as the
 # backend's ci.yml, with Node instead of Java and no service container: the tests reach no server,
 # MSW answers their HTTP calls in-process.

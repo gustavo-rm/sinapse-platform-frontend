@@ -80,7 +80,7 @@ compilador apontar a divergência.
 
 - **O gerador fica isolado em `tools/contract/`**, com `package.json` e *lockfile* próprios. O
   openapi-typescript 7.13.x declara `typescript ^5.x` como dependência par, e este projeto fixa
-  TypeScript 6.0.x (`CLAUDE.md` §3); instalá-lo na raiz exigiria forçar a resolução. Isolado, ele
+  TypeScript 6.0.x (`CLAUDE.md`, *Stack*); instalá-lo na raiz exigiria forçar a resolução. Isolado, ele
   roda com o TypeScript 5.9.3 que declara, e o que produz é texto, lido pelo TypeScript 6.0 da
   aplicação. A saída foi conferida idêntica byte a byte sob TypeScript 5.9.3 e 6.0.3. Instala-se
   com `npm run contract:install`; o CI faz isso antes de `contract:check` e dos testes. Quando o

@@ -11,7 +11,8 @@ The web client of the SINAPSE platform. It consumes the API of `sinapse-platform
 business rule of its own.
 
 **The backend is the only source of routes, fields and rules.** Never invent an endpoint, a field,
-an enum value or a validation rule. Where something is missing, record it as a gap — see §7.
+an enum value or a validation rule. Where something is missing, record it as a gap in the limitations
+table of `docs/ai/STATE.md`.
 
 The API contract is the versioned OpenAPI snapshot at `docs/openapi/openapi.json` in
 `sinapse-platform`, 59 operations, **vendored** here as `src/app/core/api/contract/openapi.json`
@@ -77,7 +78,7 @@ src/app/shared/           reusable presentational code: ui, forms, labels, pipes
 src/app/features/<name>/  one folder per domain area: data, model, ui, pages
 src/app/layouts/          the application shells
 scripts/                  tokens.css generator and the Node script tests (tokens, styles, lint)
-eslint.boundaries.js      the rules of §6 as ESLint configuration, generated per directory
+eslint.boundaries.js      the Architecture rules as ESLint configuration, generated per directory
 ```
 
 A feature folder has exactly four subfolders: `data/` (resources and writes), `model/` (types,

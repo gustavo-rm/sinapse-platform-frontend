@@ -1,4 +1,4 @@
-// No literal visual value outside tokens.css (CLAUDE.md §7). Scans the component styles and
+// No literal visual value outside tokens.css (CLAUDE.md, *The design system is binding*). Scans the component styles and
 // templates under src/app — external .css files and the inline `styles`/`template` of .ts files —
 // plus sinapse.css, which FE-1 verified the same way.
 

@@ -27,7 +27,7 @@ Two sibling repositories:
 | Which `urn:sinapse:problem:*` types exist | **not the snapshot**, which gives `ProblemDetails.type` as a `uri` with one example: `shared.web.problem.ApiErrorType` in the backend source, 17 constants. Copied into `src/app/core/api/contract/problem-type.ts` — READ@46b5b3c (unchanged since `c3abbff`). Their HTTP statuses, which MSW needs, are copied into `src/testing/msw/problems.ts` from the same file |
 | How wide each history window may be | **not the snapshot**, which says only that each window "is capped": the backend's configuration defaults — `sinapse.read-model.max-window: 31d` (`/me/agenda`, classroom roster, student panel), `sinapse.planning.max-schedule-window: 90d` (`/planned-sessions`), `sinapse.learning-record.max-history-window: 90d` (`/study-sessions`). Copied into `WINDOW_CAP_DAYS` of `AccountTimeService` — READ@c3abbff, unchanged at `46b5b3c` (`application.yml` diff between the two touches only `springdoc`). A deployment that overrides them is invisible to this client |
 | What the interface must look like and why | `docs/DESIGN_SYSTEM.md` here, and the Design System artifact it cites |
-| What must not be built | `CLAUDE.md` §8 here |
+| What must not be built | `CLAUDE.md`, *Hard prohibitions* here |
 
 A claim about the backend that none of those supports is not a fact. Say so rather than assuming.
 
@@ -91,7 +91,7 @@ contract review):
 5. `npm run lint && npm test && npm run build`, and read what fails — that is the contract change:
    - `enums.contract.ts` fails to compile → an enum gained, lost or renamed a value: update
      `enums.ts` and its label catalogue in `shared/labels/` (`RecallRating` labels are the owner's
-     call, `CLAUDE.md` §7);
+     call, `CLAUDE.md`, *The design system is binding*);
    - the `models.ts` test fails → a schema was added or removed: alias it;
    - `api-routes.spec.ts` fails → a path was added or removed: add it to `ApiRoutes` under its
      module (the controller's package names the module);

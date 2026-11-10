@@ -33,7 +33,7 @@ docs/ai/                  contexto persistente para sessões de IA
 src/styles/tokens.json    a fonte dos tokens
 src/styles/tokens.css     gerado de tokens.json — não editar à mão
 src/styles/sinapse.css    as classes dos componentes
-src/app/                  core, shared, features, layouts — ver CLAUDE.md §4
+src/app/                  core, shared, features, layouts — ver CLAUDE.md, *Layout*
 src/app/core/api/contract/ o contrato OpenAPI copiado do backend e seus tipos gerados
 src/testing/              MSW e fixtures gerados do contrato, só para testes
 tools/contract/           o gerador de tipos, isolado (ver ADR 0002)
@@ -49,7 +49,7 @@ Angular 22 declara. O npm é o que acompanha o Node.
 npm ci                 # instala exatamente o que está no package-lock.json
 npm run contract:install  # instala o gerador de tipos em tools/contract (uma vez)
 npm start              # servidor de desenvolvimento em http://localhost:4200
-npm run lint           # ESLint, incluindo as fronteiras de CLAUDE.md §6
+npm run lint           # ESLint, incluindo as fronteiras de CLAUDE.md, *Architecture rules*
 npm test               # testes unitários (Vitest) e os testes de scripts/ (Node)
 npm run build          # build de produção em dist/sinapse-web
 npm run tokens         # regenera src/styles/tokens.css a partir de tokens.json
@@ -65,7 +65,7 @@ regenera `schema.d.ts` e compara com o arquivo versionado. O CI (`.github/workfl
 `develop` e `main`. Como atualizar o contrato está em `docs/ai/CONTEXT.md`.
 
 TypeScript e Vitest estão fixados (`~6.0.3` e `~4.1.12`). **Não** rode `npm install
-typescript@latest`: a 7.x é incompatível com o Angular 22. Ver `CLAUDE.md` §3.
+typescript@latest`: a 7.x é incompatível com o Angular 22. Ver `CLAUDE.md`, *Stack*.
 
 ### Como usar os estilos
 
@@ -137,7 +137,7 @@ docs/ai/                  persistent context for AI sessions
 src/styles/tokens.json    the source of the tokens
 src/styles/tokens.css     generated from tokens.json — do not edit by hand
 src/styles/sinapse.css    the component classes
-src/app/                  core, shared, features, layouts — see CLAUDE.md §4
+src/app/                  core, shared, features, layouts — see CLAUDE.md, *Layout*
 src/app/core/api/contract/ the backend's vendored OpenAPI contract and its generated types
 src/testing/              MSW and fixtures generated from the contract, for tests only
 tools/contract/           the type generator, isolated (see ADR 0002)
@@ -153,7 +153,7 @@ declares. npm is the one that ships with Node.
 npm ci                 # installs exactly what package-lock.json holds
 npm run contract:install  # installs the type generator in tools/contract (once)
 npm start              # development server on http://localhost:4200
-npm run lint           # ESLint, including the boundaries of CLAUDE.md §6
+npm run lint           # ESLint, including the boundaries of CLAUDE.md, *Architecture rules*
 npm test               # unit tests (Vitest) and the tests under scripts/ (Node)
 npm run build          # production build into dist/sinapse-web
 npm run tokens         # regenerates src/styles/tokens.css from tokens.json
@@ -170,7 +170,7 @@ every push and pull request to `develop` and `main`. How to refresh the contract
 `docs/ai/CONTEXT.md`.
 
 TypeScript and Vitest are pinned (`~6.0.3` and `~4.1.12`). **Do not** run `npm install
-typescript@latest`: 7.x is incompatible with Angular 22. See `CLAUDE.md` §3.
+typescript@latest`: 7.x is incompatible with Angular 22. See `CLAUDE.md`, *Stack*.
 
 ### Using the styles
 

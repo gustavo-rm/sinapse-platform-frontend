@@ -13,4 +13,8 @@ export const SIGN_IN_NOTICE_LABELS: Record<SignInNotice, string> = {
   // in this browser until it expires.
   'sign-out-unconfirmed':
     'Não foi possível confirmar com o servidor o fim da sessão. Ela pode continuar ativa neste navegador até expirar. Tente sair de novo quando a conexão voltar.',
+  // Impersonal, and names no mechanism: the person cannot act on "cookie", and the cause is not
+  // known for certain from here. What they can act on is that retrying the same way will not help.
+  'session-not-established':
+    'Os dados de acesso foram aceitos, mas não foi possível manter a sessão aberta neste navegador. Tentar de novo da mesma forma não deve resolver.',
 };

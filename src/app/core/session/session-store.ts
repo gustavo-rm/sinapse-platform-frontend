@@ -12,7 +12,7 @@ import {
 import { ApiRoutes } from '../api/api-routes';
 import { AccountTimeService } from '../time/account-time.service';
 import { type AccountState, readAccountState } from './account-state';
-import { SIGN_IN_PATH } from './gate';
+import { APP_HOME_PATH, SIGN_IN_PATH } from './gate';
 
 /**
  * Where the store stands.
@@ -39,11 +39,14 @@ export type BootstrapOutcome =
  * - `session-expired`: a request found the session gone while the person was signed in.
  * - `password-changed`: the password was changed, which ends every session of the account.
  * - `sign-out-unconfirmed`: signing out did not reach the server, which may still hold the session.
+ * - `session-not-established`: the server accepted the credentials, but the very next read found no
+ *   session — the browser did not keep or send what the server issued. Not an expiry.
  */
 export const SIGN_IN_NOTICES = [
   'session-expired',
   'password-changed',
   'sign-out-unconfirmed',
+  'session-not-established',
 ] as const;
 export type SignInNotice = (typeof SIGN_IN_NOTICES)[number];
 
@@ -79,6 +82,8 @@ export class SessionStore {
   private readonly attempted = signal<string | null>(null);
   private readonly pendingNotice = signal<SignInNotice | null>(null);
 
+  /** True while `establish()` reads the state right after a successful sign-in. */
+  private establishing = false;
   /** The request in flight, shared by everyone who asks while it runs. */
   private inFlight: Promise<BootstrapOutcome> | null = null;
   /** Bumped whenever the session changes hands, so a late answer for an old one is dropped. */
@@ -136,6 +141,17 @@ export class SessionStore {
   expire(): boolean {
     if (this.ended()) {
       return false;
+    }
+    if (this.establishing) {
+      // A 401 on the read that follows a 201 of POST /sessions in this same sequence: the session
+      // was never established in this browser. Saying "your session ended" would be false, and
+      // sending the person on would only bring them back here with nothing said.
+      this.clear();
+      this.pendingNotice.set('session-not-established');
+      if (!this.router.url.startsWith(SIGN_IN_PATH)) {
+        void this.router.navigateByUrl(SIGN_IN_PATH);
+      }
+      return true;
     }
     const wasSignedIn = this.phase() === 'signed-in';
     this.remember(this.routeInView());
@@ -195,6 +211,29 @@ export class SessionStore {
     this.pendingNotice.set(null);
     this.phase.set('unknown');
     return back;
+  }
+
+  /**
+   * After `POST /api/v1/sessions` answered 201: begins a new session and reads the state, and says
+   * where the person should go. Every caller of that sequence — the sign-in screen today — uses
+   * this, so all get the same behaviour.
+   *
+   * A 401 on this read is not an expiry: the outcome is `signed-out`, the notice is
+   * `session-not-established`, the person stays on (or is taken to) the sign-in screen, and the
+   * route they were going to is kept for the next attempt. Any later 401 takes the expiry path.
+   */
+  async establish(): Promise<{ readonly outcome: BootstrapOutcome; readonly destination: string }> {
+    const back = this.begin();
+    this.establishing = true;
+    try {
+      const outcome = await this.refresh();
+      if (outcome.kind === 'signed-out') {
+        this.remember(back);
+      }
+      return { outcome, destination: back ?? APP_HOME_PATH };
+    } finally {
+      this.establishing = false;
+    }
   }
 
   private load(): Promise<BootstrapOutcome> {

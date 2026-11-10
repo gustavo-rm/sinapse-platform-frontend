@@ -5,13 +5,15 @@ import { ApiClient } from '../../../core/api/api-client';
 import { isApiFailure } from '../../../core/api/api-problem';
 import { ApiRoutes } from '../../../core/api/api-routes';
 import type { LoginRequest } from '../../../core/api/contract/models';
-import { APP_HOME_PATH } from '../../../core/session/gate';
 import { SessionStore } from '../../../core/session/session-store';
 import { type SignInRefusal, signInRefusalOf } from '../model/sign-in-outcome';
 
 /** The outcome of a sign-in: where to go, or why not. */
 export type SignInResult =
-  { readonly kind: 'signed-in'; readonly destination: string } | SignInRefusal;
+  | { readonly kind: 'signed-in'; readonly destination: string }
+  /** 201, then a 401 on the state: no session in this browser. The store says so; stay here. */
+  | { readonly kind: 'not-established' }
+  | SignInRefusal;
 
 /**
  * Signing in: `POST /api/v1/sessions` with a `LoginRequest`.
@@ -21,7 +23,8 @@ export type SignInResult =
  * the body is DISCARDED as it arrives — never read, stored, logged or passed on — and only the
  * fact that the request succeeded is kept.
  *
- * On success the store begins a new session and reads the state; the caller then navigates to
+ * On success the store establishes the session (`SessionStore.establish`) — which also tells a
+ * session that could not be kept from one that expired; the caller then navigates to
  * the route the person was on before, or to `/hoje`, and the guard chain runs on arrival: signing
  * in does not bypass it.
  */
@@ -40,8 +43,9 @@ export class SignIn {
       }
       throw error;
     }
-    const back = this.store.begin();
-    await this.store.refresh();
-    return { kind: 'signed-in', destination: back ?? APP_HOME_PATH };
+    const { outcome, destination } = await this.store.establish();
+    return outcome.kind === 'signed-out'
+      ? { kind: 'not-established' }
+      : { kind: 'signed-in', destination };
   }
 }

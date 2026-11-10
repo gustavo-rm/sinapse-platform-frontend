@@ -54,11 +54,14 @@ const FORM_LEVEL_INVALID =
   template: `
     <h1 class="display-lg">Entrar</h1>
 
-    @if (notice(); as text) {
-      <div class="sn-alert sn-alert--info notice" role="status">
-        <div class="sn-alert__body">{{ text }}</div>
-      </div>
-    }
+    <!-- Always in the document, so a notice that appears after an attempt is announced. -->
+    <div class="notice-region" role="status" aria-atomic="true">
+      @if (notice(); as text) {
+        <div class="sn-alert sn-alert--info notice">
+          <div class="sn-alert__body">{{ text }}</div>
+        </div>
+      }
+    </div>
 
     <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="sn-field" [class.sn-field--invalid]="invalid('email')">
@@ -208,6 +211,10 @@ export class SignInPage {
       case 'signed-in':
         this.form.reset();
         await this.router.navigateByUrl(result.destination);
+        return;
+      case 'not-established':
+        // The store's notice, in the status region above, says what happened. Nothing to retry.
+        this.form.controls.password.reset('');
         return;
       case 'refused':
         this.formError.set(REFUSED_MESSAGE);

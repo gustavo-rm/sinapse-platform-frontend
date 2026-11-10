@@ -290,6 +290,59 @@ describe('SessionStore', () => {
     });
   });
 
+  describe('establishing a session after a successful sign-in', () => {
+    it('reads a 401 right after the sign-in as "not established", not as an expiry', async () => {
+      server.use(
+        problemAt('get', ApiRoutes.readModel.myState, 'urn:sinapse:problem:unauthenticated'),
+      );
+      const { store, router } = setUp();
+      await router.navigateByUrl('/entrar');
+      store.remember('/agenda');
+      const navigate = vi.spyOn(router, 'navigateByUrl');
+
+      const established = await store.establish();
+
+      expect(established.outcome).toEqual({ kind: 'signed-out' });
+      expect(store.notice()).toBe('session-not-established');
+      expect(store.status()).toBe('signed-out');
+      // Already on the sign-in screen: nowhere to go, so no navigation, and no loop.
+      expect(navigate).not.toHaveBeenCalled();
+      // Where the person was going is kept for the next attempt.
+      expect(store.attemptedRoute()).toBe('/agenda');
+    });
+
+    it('sends a caller that is not on the sign-in screen there, with the same notice', async () => {
+      server.use(
+        problemAt('get', ApiRoutes.readModel.myState, 'urn:sinapse:problem:unauthenticated'),
+      );
+      const { store, router } = setUp();
+      const navigate = vi.spyOn(router, 'navigateByUrl');
+      await store.establish();
+      expect(store.notice()).toBe('session-not-established');
+      expect(navigate).toHaveBeenCalledTimes(1);
+      expect(navigate).toHaveBeenCalledWith('/entrar');
+    });
+
+    it('behaves as before when the state answers 200', async () => {
+      server.use(stateAt(() => stateBody()));
+      const { store } = setUp();
+      store.remember('/plano');
+      const established = await store.establish();
+      expect(established.outcome.kind).toBe('signed-in');
+      expect(established.destination).toBe('/plano');
+      expect(store.notice()).toBeNull();
+      expect(store.attemptedRoute()).toBeNull();
+    });
+
+    it('leaves a later 401 to the expiry path, untouched', async () => {
+      server.use(stateAt(() => stateBody()));
+      const { store } = setUp();
+      await store.establish();
+      expect(store.expire()).toBe(true);
+      expect(store.notice()).toBe('session-expired');
+    });
+  });
+
   describe('the attempted route', () => {
     it('is kept in memory until the next successful sign-in, then forgotten', async () => {
       server.use(

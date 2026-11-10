@@ -52,7 +52,8 @@
               "buildTarget": "sinapse-web:build:production"
             },
             "development": {
-              "buildTarget": "sinapse-web:build:development"
+              "buildTarget": "sinapse-web:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

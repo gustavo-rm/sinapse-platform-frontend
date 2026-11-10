@@ -88,12 +88,38 @@ acontece em `tokens.json` e desce por regeneração.
 
 ### Como rodar contra o backend local
 
-Ainda não se aplica: este cliente não faz nenhuma chamada HTTP até FE-3, que traz o cliente de API
-e o encaminhamento de `/api/v1` do servidor de desenvolvimento para o `sinapse-platform` em
-execução no perfil `local`.
+Feito e observado em 10/11/2026 contra `sinapse-platform@46b5b3c` (o *commit* de
+`src/app/core/api/contract/provenance.json`).
 
-O *cookie* de sessão é `Secure`, o que impediria seu armazenamento em `http://localhost`. O perfil
-`local` do backend já traz `sinapse.identity.session.cookie-secure: false` — **só esse perfil**.
+1. Um PostgreSQL 16 acessível em `localhost:5432`, com um banco e um usuário para o backend.
+2. O backend, no perfil `local`, na porta 8080 — como diz o README dele:
+
+   ```bash
+   export SINAPSE_DB_URL=jdbc:postgresql://localhost:5432/sinapse
+   export SINAPSE_DB_USERNAME=<usuário>
+   export SINAPSE_DB_PASSWORD=<senha>
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+   ```
+
+   O catálogo de disciplinas começa vazio; para ter o que escolher como meta, importe-o uma vez
+   com o perfil `catalog`: `java -jar target/platform-*.jar --spring.profiles.active=catalog catalog apply`.
+3. Este cliente: `npm start` (`ng serve`), em `http://localhost:4200`. A configuração
+   `development` do `serve` usa `proxy.conf.json`, que encaminha `/api/v1` para
+   `http://localhost:8080` sem reescrever o caminho. O backend não publica CORS e o cliente só usa
+   caminhos relativos: sem esse encaminhamento, toda rota protegida cai em `/indisponivel`.
+
+Para ter uma conta: `POST /api/v1/accounts` (o texto dos termos vem de `GET /api/v1/terms`; o
+perfil `local` publica três textos marcados `dev-0`, que **não** são termos de consentimento). Não
+inclua `INSTITUTION_SHARING` no cadastro — o servidor recusa; esse consentimento é dado ao aceitar
+um convite. O perfil `local` não envia e-mail: o *token* de verificação aparece no log do backend
+(`DEV ONLY - not a delivery`), e é consumido com `POST /api/v1/email-verifications`. Antes disso a
+conta não consegue entrar.
+
+O *cookie* de sessão observado: `sinapse_session`, `Path=/api/v1`, `HttpOnly`,
+`SameSite=Strict`, 30 dias, e **sem** `Secure` no perfil `local`
+(`sinapse.identity.session.cookie-secure: false`). O Chromium aceitaria um `Secure` em
+`http://localhost`, que conta como contexto seguro; em outro endereço via HTTP (o IP da máquina,
+por exemplo), recusa — e a tela de entrar então diz que a sessão não pôde ser mantida.
 
 ### Convenções
 
@@ -195,13 +221,38 @@ and flows down by regeneration.
 
 ### Running against a local backend
 
-Not applicable yet: this client makes no HTTP call until FE-3, which brings the API client and the
-development server's forwarding of `/api/v1` to `sinapse-platform` running under the `local`
-profile.
+Done and observed on 2026-11-10 against `sinapse-platform@46b5b3c` (the commit in
+`src/app/core/api/contract/provenance.json`).
 
-The session cookie is `Secure`, which would stop it being stored on `http://localhost`. The
-backend's `local` profile already sets `sinapse.identity.session.cookie-secure: false` — **that
-profile only**.
+1. A PostgreSQL 16 reachable on `localhost:5432`, with a database and a user for the backend.
+2. The backend, under the `local` profile, on port 8080 — as its own README says:
+
+   ```bash
+   export SINAPSE_DB_URL=jdbc:postgresql://localhost:5432/sinapse
+   export SINAPSE_DB_USERNAME=<user>
+   export SINAPSE_DB_PASSWORD=<password>
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+   ```
+
+   The subject catalogue starts empty; to have something to set a goal on, import it once with the
+   `catalog` profile: `java -jar target/platform-*.jar --spring.profiles.active=catalog catalog apply`.
+3. This client: `npm start` (`ng serve`), on `http://localhost:4200`. The `development`
+   configuration of `serve` uses `proxy.conf.json`, which forwards `/api/v1` to
+   `http://localhost:8080` without rewriting the path. The backend publishes no CORS and the client
+   uses relative paths only: without the forwarding, every guarded route lands on `/indisponivel`.
+
+To get an account: `POST /api/v1/accounts` (the terms come from `GET /api/v1/terms`; the `local`
+profile publishes three wordings marked `dev-0`, which are **not** consent terms). Leave
+`INSTITUTION_SHARING` out of the registration — the server refuses it; that consent is given when
+redeeming an invite. The `local` profile sends no e-mail: the verification token is in the backend
+log (`DEV ONLY - not a delivery`), redeemed with `POST /api/v1/email-verifications`. Until then the
+account cannot sign in.
+
+The session cookie as observed: `sinapse_session`, `Path=/api/v1`, `HttpOnly`, `SameSite=Strict`,
+30 days, and **no** `Secure` under the `local` profile
+(`sinapse.identity.session.cookie-secure: false`). Chromium would accept a `Secure` one on
+`http://localhost`, which counts as a secure context; on another address over HTTP (the machine's
+IP, for instance) it refuses it — and the sign-in screen then says the session could not be kept.
 
 ### Conventions
 

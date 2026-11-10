@@ -31,6 +31,13 @@ Two sibling repositories:
 
 A claim about the backend that none of those supports is not a fact. Say so rather than assuming.
 
+**Read the operations' descriptions, not only the schemas.** In this snapshot, contract facts live
+in each operation's `description` and response descriptions as well as in `required`: 38 of 56
+schemas declare nothing required, yet `GET /api/v1/me/state` says in prose which members "come
+back empty". A schema that says nothing is not a contract that says nothing — both errors of the
+FE-4 review came from reading only the schema. And what neither says, run the backend and look
+(`README.md`, running against a local backend).
+
 ## Cross-repository facts that shape this client
 
 - **Same origin.** The session cookie is `HttpOnly; Secure; SameSite=Strict; Path=/api/v1` and the
@@ -124,13 +131,13 @@ password, token or e-mail reaches the console or storage through every flow). Be
 if it fails. The read is imperative and the state is exposed as signals (ADR 0003). Statuses:
 `unknown` → `loading` → `signed-in` | `signed-out` | `failed`.
 
-**The body is read strictly** (`account-state.ts`, decision D1 in `STATE.md`). `accountStatus`,
-`requiresMajorityReaffirmation`, `timeZone`, `pendingConsents`, and `setupComplete` for an ACTIVE
-account are required: one missing or out of contract makes the bootstrap a
-`TransportFailure('unreadable')`, never a default. `setupComplete` may be empty for any other
-status (the route's own description says the readiness flag comes back empty for a holder whose
-data may not be processed, and the chain decides those statuses first). The three identifiers
-accept absent and `null`, both meaning none.
+**The body is read strictly** (`account-state.ts`, decision D1 in `STATE.md`). `accountStatus`
+is always required; for an ACTIVE account so are `requiresMajorityReaffirmation`, `timeZone`,
+`pendingConsents` and `setupComplete`: one missing or out of contract makes the bootstrap a
+`TransportFailure('unreadable')`, never a default. For any other status those four may be empty
+(C7: the chain decides those statuses by `accountStatus` alone). The three identifiers accept
+absent and `null`; the server omits them. The bodies actually observed are in `STATE.md`,
+*Observed bootstrap bodies*.
 
 **The guard chain** (`gate.ts`, a pure function; `session-guards.ts`, the guards). Every child of
 the student layout runs `sessionGuard`; each gate screen runs `gateGuard(gate)` and opens only for
@@ -164,9 +171,12 @@ own 401 has gone through `expire()`; failed → nothing can be told, the error s
 session is kept. Delete the probe when the backend gives a refused credential its own problem type
 (K-C).
 
-**After sign-in** the store `begin()`s a new session (forgetting the remembered route, which lives
-only in memory and only until then), reads the state, and the person goes to the remembered route
-or `/hoje` — through the guard chain, which a sign-in never bypasses.
+**After sign-in** the caller runs `SessionStore.establish()`: it `begin()`s a new session
+(forgetting the remembered route, which lives only in memory and only until then), reads the
+state, and returns where to go — the remembered route or `/hoje`, through the guard chain, which a
+sign-in never bypasses. A 401 on that read means the browser did not keep the session (a refused
+cookie): not an expiry, but the notice `session-not-established`, the person stays on `/entrar`,
+and the route is kept (C8).
 
 **The account time zone.** After every successful read the store passes `timeZone` to
 `AccountTimeService.setAccountZone`, which validates it by building a formatter inside a

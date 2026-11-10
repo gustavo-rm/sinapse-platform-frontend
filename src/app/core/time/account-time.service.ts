@@ -79,6 +79,8 @@ export class AccountTimeService {
   private readonly formatters = new Map<string, Intl.DateTimeFormat>();
   /** The development warnings already given, so each is logged once and none hides another. */
   private readonly warned = new Set<string>();
+  /** True while UTC is in force because the account has no zone by its status. */
+  private fallbackExpected = false;
 
   /** The zone every conversion uses: the account's, or UTC while it is unknown. */
   readonly zone = computed(() => this.accountZone() ?? FALLBACK_ZONE);
@@ -88,8 +90,13 @@ export class AccountTimeService {
    * not know, leaves the UTC fallback in force. The name is validated by constructing a formatter
    * with it inside a try/catch, so an unknown string can never reach `formatInstant` and throw at
    * render time.
+   *
+   * `absentByStatus`: the zone is null because the account's status carries none (a non-ACTIVE
+   * account, whose screens show no date). UTC is then the intended fallback, not a
+   * misconfiguration, and no development warning is given for it.
    */
-  setAccountZone(timeZone: string | null): void {
+  setAccountZone(timeZone: string | null, absentByStatus = false): void {
+    this.fallbackExpected = timeZone === null && absentByStatus;
     if (timeZone !== null && !isKnownZone(timeZone)) {
       this.warn('The account time zone is not a known IANA zone; falling back to UTC.');
       this.accountZone.set(null);
@@ -157,7 +164,7 @@ export class AccountTimeService {
   }
 
   private effectiveZone(): string {
-    if (this.accountZone() === null) {
+    if (this.accountZone() === null && !this.fallbackExpected) {
       this.warn('The account time zone is not known yet; dates are shown in UTC.');
     }
     return this.zone();

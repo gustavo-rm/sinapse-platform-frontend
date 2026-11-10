@@ -4,7 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { HttpResponse, type JsonBodyType, http } from 'msw';
 
 import { fixture } from '../../../../testing/msw/fixtures';
-import { problemBody } from '../../../../testing/msw/problems';
+import { problemBody, problemResponse } from '../../../../testing/msw/problems';
 import { networkFailureAt, problemAt } from '../../../../testing/msw/scenarios';
 import { useMswServer } from '../../../../testing/msw/server';
 import { appConfig } from '../../../app.config';
@@ -148,6 +148,32 @@ describe('the sign-in screen', () => {
       const password = input('sign-in-password');
       await submit();
       await vi.waitFor(() => expect(password.value).toBe(''));
+    });
+  });
+
+  describe('201, then a 401 on the state (the session could not be established)', () => {
+    it('says so, leaves the person on the sign-in screen, and does not loop', async () => {
+      let stateCalls = 0;
+      server.use(
+        http.get(ApiRoutes.readModel.myState, () => {
+          stateCalls++;
+          return problemResponse('urn:sinapse:problem:unauthenticated');
+        }),
+      );
+      const { fill, submit, router, root, harness } = await openSignIn();
+      const before = stateCalls; // the cold bootstrap of /entrar makes none: it is public
+      const navigate = vi.spyOn(router, 'navigateByUrl');
+      fill();
+      await submit();
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/entrar');
+      expect(stateCalls - before).toBe(1);
+      expect(navigate).not.toHaveBeenCalled();
+      expect(root().querySelector('[role="status"]')?.textContent?.trim()).toBe(
+        SIGN_IN_NOTICE_LABELS['session-not-established'],
+      );
+      expect(root().textContent).not.toMatch(/cookie|header|cabeçalho/i);
     });
   });
 

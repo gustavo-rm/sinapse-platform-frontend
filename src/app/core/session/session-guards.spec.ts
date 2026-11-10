@@ -147,6 +147,21 @@ describe('the guarded routes', () => {
     expect(context.root().querySelector('sn-student-layout')).toBeNull();
   });
 
+  it.each([
+    ['ANONYMIZED', '/conta-encerrada'],
+    ['SUSPENDED', '/conta-suspensa'],
+    ['PENDING_VERIFICATION', '/verificar-email'],
+  ])(
+    'reaches the %s screen from a body that carries nothing but the status (FE-4.1)',
+    async (status, path) => {
+      server.use(stateAt(() => ({ accountStatus: status }) as JsonBodyType));
+      const { harness, router } = await setUp();
+      await harness.navigateByUrl('/hoje');
+      expect(router.url).toBe(path);
+      expect(warn).not.toHaveBeenCalled();
+    },
+  );
+
   it('lets through a student with a plan being generated: not a gate', async () => {
     server.use(
       stateAt(() => stateBody({ activeGenerationJobId: '00000000-0000-4000-8000-00000000000a' })),

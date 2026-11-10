@@ -140,20 +140,73 @@ describe('readAccountState', () => {
     });
 
     it.each(others)(
-      '%s still fails without timeZone, pendingConsents or the reaffirmation flag',
+      '%s may come without timeZone, pendingConsents or the reaffirmation flag',
       (accountStatus) => {
-        for (const member of [
-          'timeZone',
-          'pendingConsents',
-          'requiresMajorityReaffirmation',
+        const reading = readAccountState({ accountStatus });
+        expect(reading).toEqual({
+          ok: true,
+          state: {
+            accountStatus,
+            timeZone: null,
+            pendingConsents: null,
+            requiresMajorityReaffirmation: null,
+            setupComplete: null,
+            activePlanId: null,
+            activeGenerationJobId: null,
+            openSessionId: null,
+          },
+        });
+      },
+    );
+
+    it.each(others)(
+      '%s still fails on a member that is present but out of contract',
+      (accountStatus) => {
+        for (const [member, value] of [
+          ['timeZone', 7],
+          ['pendingConsents', ['MARKETING']],
+          ['requiresMajorityReaffirmation', 'no'],
+          ['setupComplete', 0],
         ] as const) {
-          expect(readAccountState(without(member, complete({ accountStatus })))).toEqual({
+          expect(readAccountState({ accountStatus, [member]: value })).toEqual({
             ok: false,
             member,
           });
         }
       },
     );
+  });
+
+  describe('the bodies observed on sinapse-platform@46b5b3c (FE-4.1), verbatim', () => {
+    it('reads an ACTIVE body, which omits the three identifiers when there is none', () => {
+      const reading = readAccountState({
+        accountStatus: 'ACTIVE',
+        timeZone: 'America/Sao_Paulo',
+        pendingConsents: ['ACADEMIC_RESEARCH'],
+        requiresMajorityReaffirmation: false,
+        setupComplete: false,
+      });
+      expect(reading.ok && reading.state).toEqual(
+        expect.objectContaining({ activePlanId: null, pendingConsents: ['ACADEMIC_RESEARCH'] }),
+      );
+    });
+
+    it('reads a SUSPENDED body: every member present, the readiness flag false', () => {
+      const reading = readAccountState({
+        accountStatus: 'SUSPENDED',
+        timeZone: 'America/Sao_Paulo',
+        pendingConsents: [],
+        requiresMajorityReaffirmation: false,
+        setupComplete: false,
+      });
+      expect(reading.ok && reading.state).toEqual(
+        expect.objectContaining({
+          accountStatus: 'SUSPENDED',
+          timeZone: 'America/Sao_Paulo',
+          setupComplete: false,
+        }),
+      );
+    });
   });
 
   it('copies the consent list rather than keeping the body alive', () => {

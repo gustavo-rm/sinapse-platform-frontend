@@ -1,5 +1,5 @@
 // @ts-check
-// The architecture boundaries of CLAUDE.md §6, as ESLint rules that fail the build (rule R7).
+// The architecture boundaries of CLAUDE.md, *Architecture rules*, as ESLint rules that fail the build (rule R7).
 //
 //   R1  HttpClient is imported only under core/api/**
 //   R2  the literal /api/ appears only in core/api/api-routes.ts; no absolute URL anywhere
@@ -32,13 +32,15 @@ const EXEMPT_FILES = {
 
 // --- R1 ---------------------------------------------------------------------------------------
 
-const R1 = 'R1 (CLAUDE.md §6) — only core/api/** may make an HTTP call. Use the API layer.';
+const R1 =
+  'R1 (CLAUDE.md, *Architecture rules*) — only core/api/** may make an HTTP call. Use the API layer.';
 
 // --- R2 ---------------------------------------------------------------------------------------
 
 const R2_API =
-  'R2 (CLAUDE.md §6) — only core/api/api-routes.ts holds the literal /api/. Take the route from there.';
-const R2_ABSOLUTE = 'R2 (CLAUDE.md §6) — no absolute URL: same origin is an architectural premise.';
+  'R2 (CLAUDE.md, *Architecture rules*) — only core/api/api-routes.ts holds the literal /api/. Take the route from there.';
+const R2_ABSOLUTE =
+  'R2 (CLAUDE.md, *Architecture rules*) — no absolute URL: same origin is an architectural premise.';
 // A module path is not a URL: the source of an import or export is left out. esquery cannot read
 // "/" inside a regex, so a slash is written as its Unicode escape, u002F after a backslash.
 const NOT_MODULE_SOURCE =
@@ -56,7 +58,7 @@ const R2_SYNTAX = [
 // --- R4 ---------------------------------------------------------------------------------------
 
 const R4 =
-  'R4 (CLAUDE.md §6) — no date is formatted, or read in the browser zone, outside AccountTimeService. Use it, or the accountDate pipe.';
+  'R4 (CLAUDE.md, *Architecture rules*) — no date is formatted, or read in the browser zone, outside AccountTimeService. Use it, or the accountDate pipe.';
 const R4_SYNTAX = [
   { selector: "MemberExpression[object.name='Intl'][property.name='DateTimeFormat']", message: R4 },
   {
@@ -76,7 +78,7 @@ const R4_PATHS = [
 // --- R5 ---------------------------------------------------------------------------------------
 
 const R5 =
-  'R5 (CLAUDE.md §6) — translating an enum value to text happens only in shared/labels/**, typed as Record<Enum, string>.';
+  'R5 (CLAUDE.md, *Architecture rules*) — translating an enum value to text happens only in shared/labels/**, typed as Record<Enum, string>.';
 const R5_SYNTAX = [
   {
     selector:
@@ -99,11 +101,13 @@ const R5_SYNTAX = [
 // --- R3 ---------------------------------------------------------------------------------------
 
 const R3_FEATURES =
-  'R3 (CLAUDE.md §6) — a feature never imports another feature. What is shared rises to shared/.';
-const R3_SHARED = 'R3 (CLAUDE.md §6) — shared/** never imports from features/**.';
-const R3_CORE = 'R3 (CLAUDE.md §6) — core/** never imports from features/** or shared/ui/**.';
+  'R3 (CLAUDE.md, *Architecture rules*) — a feature never imports another feature. What is shared rises to shared/.';
+const R3_SHARED =
+  'R3 (CLAUDE.md, *Architecture rules*) — shared/** never imports from features/**.';
+const R3_CORE =
+  'R3 (CLAUDE.md, *Architecture rules*) — core/** never imports from features/** or shared/ui/**.';
 const R3_UI =
-  'R3 (CLAUDE.md §6) — ui/** never imports from data/**. A component receives data; it does not fetch it.';
+  'R3 (CLAUDE.md, *Architecture rules*) — ui/** never imports from data/**. A component receives data; it does not fetch it.';
 const OUTSIDE_APP = 'Relative imports stay inside src/app.';
 const OUTSIDE_APP_SPEC =
   'Relative imports stay inside src/app; a spec may also reach src/testing, and nothing else.';

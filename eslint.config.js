@@ -44,7 +44,7 @@ module.exports = defineConfig([
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {},
   },
-  // CLAUDE.md §6, rules R1 to R5. See eslint.boundaries.js.
+  // CLAUDE.md, *Architecture rules*, rules R1 to R5. See eslint.boundaries.js.
   ...boundaryConfigs(__dirname),
   {
     files: ['scripts/**/*.mjs'],

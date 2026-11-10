@@ -1,27 +1,42 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
+import type { TransportFailureReason } from '../../../core/api/api-problem';
 import type { ProblemType } from '../../../core/api/contract/problem-type';
 import { PROBLEM_TYPE_LABELS } from '../../labels/problem-type.labels';
+import { TRANSPORT_FAILURE_LABELS } from '../../labels/transport-failure.labels';
 
 /**
- * What this component reads from a failure. The full problem type, and how it is built from a
- * response, belong to the API layer (FE-3); any shape that carries these two members fits.
+ * What this component reads from a failure: a problem the server answered with, by its `type`, or
+ * a failure to answer in the contract, by its `reason`. Both kinds of `ApiFailure` fit as they
+ * are (`ApiProblemFailure`, `TransportFailure`).
  */
-export interface ErrorStateProblem {
-  /** The RFC 7807 `type`. The message is chosen by it, never by the HTTP status. */
-  readonly type: ProblemType;
-  /** The `X-Correlation-Id` of the failed response, if the API layer has it. */
-  readonly correlationId?: string | null;
-}
+export type ErrorStateProblem =
+  | {
+      /** The RFC 7807 `type`. The message is chosen by it, never by the HTTP status. */
+      readonly type: ProblemType;
+      /** The `X-Correlation-Id` of the failed response, if the API layer has it. */
+      readonly correlationId?: string | null;
+    }
+  | {
+      /** Why no usable answer came: no network, a timeout, an unreadable body. */
+      readonly reason: TransportFailureReason;
+      readonly correlationId?: string | null;
+    };
 
 /**
  * The problem types for which repeating the same request can work. Never a 4xx, and never
- * `rate-limit-exceeded`, which has its own notice with no retry control. A network failure is
- * retryable too, but it is not a problem type: the API layer decides how it reaches this component.
+ * `rate-limit-exceeded`, which has its own notice with no retry control.
  */
 export const RETRYABLE_PROBLEM_TYPES: ReadonlySet<ProblemType> = new Set<ProblemType>([
   'urn:sinapse:problem:internal-error',
 ]);
+
+/**
+ * The transport failures for which asking again can work: no answer at all, or none in time. Not
+ * an unreadable answer: the same request gets the same body.
+ */
+export const RETRYABLE_TRANSPORT_REASONS: ReadonlySet<TransportFailureReason> =
+  new Set<TransportFailureReason>(['network', 'timeout']);
 
 /**
  * A failure that takes the place of the content. The message comes from the label catalogue by
@@ -84,6 +99,16 @@ export class ErrorState {
   /** Emitted when the person asks to repeat the request. Offered only where repeating can work. */
   readonly retry = output<void>();
 
-  protected readonly message = computed(() => PROBLEM_TYPE_LABELS[this.problem().type]);
-  protected readonly retryable = computed(() => RETRYABLE_PROBLEM_TYPES.has(this.problem().type));
+  protected readonly message = computed(() => {
+    const problem = this.problem();
+    return 'reason' in problem
+      ? TRANSPORT_FAILURE_LABELS[problem.reason]
+      : PROBLEM_TYPE_LABELS[problem.type];
+  });
+  protected readonly retryable = computed(() => {
+    const problem = this.problem();
+    return 'reason' in problem
+      ? RETRYABLE_TRANSPORT_REASONS.has(problem.reason)
+      : RETRYABLE_PROBLEM_TYPES.has(problem.type);
+  });
 }

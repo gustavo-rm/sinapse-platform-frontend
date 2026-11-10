@@ -1,11 +1,33 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { HttpResponse, http } from 'msw';
 
+import { fixture } from '../testing/msw/fixtures';
+import { useMswServer } from '../testing/msw/server';
+import { appConfig } from './app.config';
 import { routes } from './app.routes';
+import { ApiRoutes } from './core/api/api-routes';
+
+const server = useMswServer();
 
 describe('app routes', () => {
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter(routes)] }));
+  beforeEach(() => {
+    // A signed-in, configured student: the guard chain lets them into every area.
+    server.use(
+      http.get(ApiRoutes.readModel.myState, () =>
+        HttpResponse.json({
+          ...fixture('StudentStateView'),
+          accountStatus: 'ACTIVE',
+          setupComplete: true,
+          requiresMajorityReaffirmation: false,
+          pendingConsents: [],
+          timeZone: 'America/Sao_Paulo',
+        }),
+      ),
+    );
+    TestBed.configureTestingModule({ providers: appConfig.providers });
+  });
 
   it.each([
     ['/hoje', 'Hoje'],

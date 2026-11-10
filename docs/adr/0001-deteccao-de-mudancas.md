@@ -22,8 +22,8 @@ sentidos. Este registro cumpre isso e avalia se a escolha serve ao produto.
 
 O que pesa a favor dela é o modo como este cliente já foi desenhado:
 
-- o estado remoto vem de `httpResource`, que expõe o resultado como *signal* (`CLAUDE.md` §3);
-- o estado de sessão vem de um único *store* que lê `GET /api/v1/me/state` (`CLAUDE.md` §9);
+- o estado remoto vem de `httpResource`, que expõe o resultado como *signal* (`CLAUDE.md`, *Stack*);
+- o estado de sessão vem de um único *store* que lê `GET /api/v1/me/state` (`CLAUDE.md`, *Session and time, in one place*);
 - o fuso da conta, em `AccountTimeService`, já é um *signal*;
 - o `SessionTimer` conta pelo relógio de parede a partir de `startedAt`, e não por incremento
   local (`docs/DESIGN_SYSTEM.md` §8), e a espera da geração de plano é uma consulta periódica com
@@ -61,6 +61,6 @@ efeito de esconder estado não reativo. Rejeitada pelos mesmos motivos.
   (teste em `account-date.pipe.spec.ts`).
 - Fica fora qualquer biblioteca que dependa de zone.js para funcionar. Isso é coerente com a regra
   de não adotar biblioteca de componentes, de estado ou de validação de esquema sem ADR
-  (`CLAUDE.md` §3).
+  (`CLAUDE.md`, *Stack*).
 - A reversão é local — `zone.js` em `package.json`, `polyfills` em `angular.json` e
   `provideZoneChangeDetection()` em `app.config.ts` — e exige uma nova ADR.

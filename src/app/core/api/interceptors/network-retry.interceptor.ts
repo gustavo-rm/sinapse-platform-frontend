@@ -4,7 +4,7 @@ import { retry, throwError, timer } from 'rxjs';
 
 import { isTransportFailure } from '../api-problem';
 
-/** At most this many automatic retries of one request (`CLAUDE.md` §9). */
+/** At most this many automatic retries of one request (`CLAUDE.md`, *Session and time, in one place*). */
 export const MAX_NETWORK_RETRIES = 2;
 
 /**

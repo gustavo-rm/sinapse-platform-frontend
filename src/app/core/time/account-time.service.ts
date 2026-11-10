@@ -67,21 +67,27 @@ const FORMAT_OPTIONS: Record<InstantFormat, Intl.DateTimeFormatOptions> = {
  * never the browser's: the server interprets local times in the account's zone, and formatting in
  * the browser's produces an error that only shows while travelling or at a daylight-saving change.
  *
- * The zone is empty until the session work (FE-4) fills it from `/me/state`. Until then every
- * conversion falls back to UTC, and a warning is logged once, in development only.
+ * The zone is empty until `SessionStore` fills it from `/me/state`, after every successful
+ * bootstrap or refresh, and is emptied again when the session ends. While it is empty — and when
+ * the server sent a name this runtime cannot use — every conversion falls back to UTC, and a
+ * warning is logged once per cause, in development only. A wrong zone is visible in development
+ * and never throws in a template in production.
  */
 @Injectable({ providedIn: 'root' })
 export class AccountTimeService {
   private readonly accountZone = signal<string | null>(null);
   private readonly formatters = new Map<string, Intl.DateTimeFormat>();
-  private warnedFallback = false;
+  /** The development warnings already given, so each is logged once and none hides another. */
+  private readonly warned = new Set<string>();
 
   /** The zone every conversion uses: the account's, or UTC while it is unknown. */
   readonly zone = computed(() => this.accountZone() ?? FALLBACK_ZONE);
 
   /**
    * Sets the account's IANA zone, as `/me/state` reports it. `null`, or a name the runtime does
-   * not know, leaves the UTC fallback in force.
+   * not know, leaves the UTC fallback in force. The name is validated by constructing a formatter
+   * with it inside a try/catch, so an unknown string can never reach `formatInstant` and throw at
+   * render time.
    */
   setAccountZone(timeZone: string | null): void {
     if (timeZone !== null && !isKnownZone(timeZone)) {
@@ -158,8 +164,8 @@ export class AccountTimeService {
   }
 
   private warn(message: string): void {
-    if (!this.warnedFallback && isDevMode()) {
-      this.warnedFallback = true;
+    if (!this.warned.has(message) && isDevMode()) {
+      this.warned.add(message);
       console.warn(`[AccountTimeService] ${message}`);
     }
   }

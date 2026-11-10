@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
+import { ApiProblemFailure, TransportFailure } from '../../core/api/api-problem';
 import { PROBLEM_TYPES, type ProblemType } from '../../core/api/contract/problem-type';
 import { PROBLEM_TYPE_LABELS } from '../labels/problem-type.labels';
+import { TRANSPORT_FAILURE_LABELS } from '../labels/transport-failure.labels';
 import { EmptyState } from './empty-state/empty-state';
 import {
   ErrorState,
@@ -173,6 +175,44 @@ describe('ErrorState', () => {
     expect(details?.querySelector('.sn-state__detail')?.textContent?.trim()).toBe(
       '01HQ8Z3K7F9M2P4R6T8V0W1X3Y',
     );
+  });
+
+  it.each([
+    ['network', true],
+    ['timeout', true],
+    ['unreadable', false],
+  ] as const)(
+    'words a transport failure (%s) by its reason; retry offered: %s',
+    async (reason, retry) => {
+      const failure = new TransportFailure(reason, {
+        method: 'GET',
+        route: null,
+        correlationId: 'c-1',
+      });
+      const { host } = await renderProblem(failure);
+
+      expect(host.querySelector('[role="alert"] h2')?.textContent?.trim()).toBe(
+        TRANSPORT_FAILURE_LABELS[reason],
+      );
+      expect(host.querySelector('button') !== null).toBe(retry);
+      expect(host.querySelector('.sn-state__detail')?.textContent?.trim()).toBe('c-1');
+    },
+  );
+
+  it('takes an ApiProblemFailure as it is', async () => {
+    const failure = new ApiProblemFailure(
+      {
+        type: 'urn:sinapse:problem:conflict',
+        title: 't',
+        status: 409,
+        detail: 'English detail',
+        instance: '/',
+      },
+      { method: 'POST', route: null, correlationId: null },
+    );
+    const { host } = await renderProblem(failure);
+    expect(host.textContent).toContain(PROBLEM_TYPE_LABELS['urn:sinapse:problem:conflict']);
+    expect(host.textContent).not.toContain('English detail');
   });
 
   it('draws no <details> when there is no correlation id', async () => {

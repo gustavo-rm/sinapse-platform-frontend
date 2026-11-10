@@ -17,7 +17,9 @@ import {
   SESSION_SOURCES,
   SESSION_STATUSES,
 } from '../../core/api/contract/enums';
+import { TRANSPORT_FAILURE_REASONS } from '../../core/api/api-problem';
 import { PROBLEM_TYPES } from '../../core/api/contract/problem-type';
+import { SIGN_IN_NOTICES } from '../../core/session/session-store';
 import { THEME_CHOICES } from '../../core/theme/theme.service';
 import { ACCOUNT_STATUS_LABELS } from './account-status.labels';
 import { CLASSROOM_STATUS_LABELS } from './classroom-status.labels';
@@ -37,7 +39,9 @@ import { RECALL_RATING_LABELS } from './recall-rating.labels';
 import { SESSION_KIND_LABELS } from './session-kind.labels';
 import { SESSION_SOURCE_LABELS } from './session-source.labels';
 import { SESSION_STATUS_LABELS } from './session-status.labels';
+import { SIGN_IN_NOTICE_LABELS } from './sign-in-notice.labels';
 import { THEME_CHOICE_LABELS } from './theme-choice.labels';
+import { TRANSPORT_FAILURE_LABELS } from './transport-failure.labels';
 
 /** Each catalogue next to the values it must cover. */
 const CATALOGUES: [string, readonly string[], Record<string, string>][] = [
@@ -60,6 +64,8 @@ const CATALOGUES: [string, readonly string[], Record<string, string>][] = [
   ['DayOfWeek', DAYS_OF_WEEK, DAY_OF_WEEK_LABELS],
   ['ProblemType', PROBLEM_TYPES, PROBLEM_TYPE_LABELS],
   ['ThemeChoice', THEME_CHOICES, THEME_CHOICE_LABELS],
+  ['TransportFailureReason', TRANSPORT_FAILURE_REASONS, TRANSPORT_FAILURE_LABELS],
+  ['SignInNotice', SIGN_IN_NOTICES, SIGN_IN_NOTICE_LABELS],
 ];
 
 /** Words that judge the student, or celebrate. `docs/DESIGN_SYSTEM.md` §2.4: describe, never evaluate. */
@@ -67,8 +73,8 @@ const JUDGEMENT =
   /(?<!\p{L})(ruim|insuficiente|parab[eé]ns|[oó]tim[oa]|excelente|frac[oa]|p[eé]ssim[oa]|baix[oa]|bom|boa|mal|incr[ií]vel|perfeit[oa])(?!\p{L})/iu;
 
 describe('label catalogue', () => {
-  it('covers the 16 domain enums, DayOfWeek, the problem types and the theme choice', () => {
-    expect(CATALOGUES).toHaveLength(19);
+  it('covers the 16 domain enums, DayOfWeek, the problem types, and the client unions: theme choice, transport failure, sign-in notice', () => {
+    expect(CATALOGUES).toHaveLength(21);
   });
 
   it('knows exactly the 17 problem types of the backend catalogue', () => {

@@ -1,4 +1,4 @@
-// No literal visual value outside tokens.css (CLAUDE.md §7). Scans the component styles and
+// No literal visual value outside tokens.css (CLAUDE.md, *The design system is binding*). Scans the component styles and
 // templates under src/app — external .css files and the inline `styles`/`template` of .ts files —
 // plus sinapse.css, which FE-1 verified the same way.
 
@@ -67,12 +67,39 @@ test('the student layout switches at bp-md and bp-lg', () => {
   assert.match(css, new RegExp(`@media \\(min-width: ${value('bp-lg')}\\)`));
 });
 
+// Nothing is persisted (CLAUDE.md, *Session and time, in one place*): no web storage, no IndexedDB,
+// no cookie written by script. Production code only: a spec may name the storage APIs to prove nothing is written to them
+// (core/session/no-leak.spec.ts).
 test('nothing under src/app touches browser storage', () => {
   const offenders = sources
     .filter(
       ({ file, text }) =>
-        file.startsWith('src/app') && /\b(localStorage|sessionStorage|indexedDB)\b/.test(text),
+        file.startsWith('src/app') &&
+        !file.endsWith('.spec.ts') &&
+        /\b(localStorage|sessionStorage|indexedDB|document\.cookie)\b/.test(text),
     )
     .map(({ file }) => file);
   assert.deepEqual(offenders, []);
+});
+
+// The focus ring is the global `:focus-visible` rule of sinapse.css (2px focus-ring). A component
+// that removes the outline takes it away from keyboard users (docs/DESIGN_SYSTEM.md §10). The one
+// exception is not a control: the student layout's <main tabindex="-1">, which the skip control
+// focuses by script so the next Tab lands in the content.
+const OUTLINE_EXEMPT = new Set(['src/app/layouts/student-layout/student-layout.css']);
+
+test('no component removes the focus outline', () => {
+  const offenders = sources
+    .filter(({ file, text }) => file.startsWith('src/app') && /outline\s*:\s*(none|0)\b/.test(text))
+    .map(({ file }) => file)
+    .filter((file) => !OUTLINE_EXEMPT.has(file));
+  assert.deepEqual(offenders, []);
+});
+
+test('the exempt removal is only the <main> focus target', () => {
+  const css = sources.find(({ file }) => OUTLINE_EXEMPT.has(file))?.text ?? '';
+  const removals = [...css.matchAll(/([^{}]+)\{[^}]*outline\s*:\s*(none|0)\b[^}]*\}/g)].map((m) =>
+    m[1].trim(),
+  );
+  assert.deepEqual(removals, ['.main:focus']);
 });

@@ -14,7 +14,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
 import { appConfig } from '../../app.config';
-import { SessionExpiry } from '../session/session-expiry';
+import { SessionStore } from '../session/session-store';
 import { ApiClient } from './api-client';
 import {
   type ApiFailure,
@@ -120,7 +120,7 @@ describe.skipIf(!LIVE_ORIGIN)('the API layer against a live local backend', () =
   });
 
   it('GET /me/state, anonymous: 401 mapped to unauthenticated, expiry path fired once', async () => {
-    const expire = vi.spyOn(TestBed.inject(SessionExpiry), 'expire');
+    const expire = vi.spyOn(TestBed.inject(SessionStore), 'expire');
     const failure = await failureOf(firstValueFrom(api.get(ApiRoutes.readModel.myState)));
     expect(isUnauthenticated(failure)).toBe(true);
     expect((failure as ApiProblemFailure).problem.status).toBe(401);

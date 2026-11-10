@@ -1,6 +1,6 @@
 // Keeps the vendored contract honest. Run with `npm run test:scripts` (part of `npm test`).
 //
-//   - openapi.json hashes to the SHA-256 recorded in its README: a hand edit of the vendored copy
+//   - openapi.json hashes to the SHA-256 recorded in provenance.json: a hand edit of the vendored copy
 //     would otherwise be invisible
 //   - schema.d.ts is exactly a regeneration of openapi.json: a hand edit of the generated file, or
 //     a snapshot refreshed without `npm run contract`, fails here
@@ -29,14 +29,13 @@ function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
-/** The value of a `| Field | Value |` row of the provenance table, without backticks. */
-function provenance(field) {
-  const cells = readFileSync(PROVENANCE, 'utf8')
-    .split('\n')
-    .map((line) => line.split('|').map((cell) => cell.trim()))
-    .find((row) => row[0] === '' && row[1] === field);
-  assert.ok(cells, `README.md has no "${field}" row`);
-  return cells[2].replace(/`/g, '');
+/**
+ * The provenance record of the vendored snapshot. A JSON file, not a markdown table: a drift guard
+ * must not depend on how a formatter lays out a table (Prettier reformatting the table once broke
+ * the parser that read it).
+ */
+function provenance() {
+  return JSON.parse(readFileSync(PROVENANCE, 'utf8'));
 }
 
 /** The JavaScript a TypeScript source compiles to, comments and blank lines removed. */
@@ -67,18 +66,26 @@ function runtimeStatements(source) {
     .map((statement) => ts.SyntaxKind[statement.kind]);
 }
 
-test('the vendored openapi.json hashes to the SHA-256 recorded in its README', () => {
-  assert.equal(sha256(readFileSync(SNAPSHOT)), provenance('SHA-256'));
+test('provenance.json names the source repository, the source commit, the SHA-256 and the date', () => {
+  const record = provenance();
+  assert.match(record.sourceRepository, /^[\w.-]+\/[\w.-]+$/);
+  assert.match(record.sourceCommit, /^[0-9a-f]{40}$/);
+  assert.match(record.sha256, /^[0-9a-f]{64}$/);
+  assert.match(record.vendoredOn, /^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('the vendored openapi.json hashes to the SHA-256 recorded in provenance.json', () => {
+  assert.equal(sha256(readFileSync(SNAPSHOT)), provenance().sha256);
 });
 
 test('a one-byte edit of the vendored snapshot changes the hash', () => {
   const bytes = readFileSync(SNAPSHOT);
   const edited = Buffer.from(bytes);
   edited[edited.length - 2] ^= 1;
-  assert.notEqual(sha256(edited), provenance('SHA-256'));
+  assert.notEqual(sha256(edited), provenance().sha256);
 });
 
-test('the vendored snapshot has the operation and schema counts its README records', () => {
+test('the vendored snapshot has the operation and schema counts provenance.json records', () => {
   const spec = JSON.parse(readFileSync(SNAPSHOT, 'utf8'));
   const paths = Object.keys(spec.paths).length;
   const operations = Object.values(spec.paths).reduce(
@@ -86,10 +93,7 @@ test('the vendored snapshot has the operation and schema counts its README recor
     0,
   );
   const schemas = Object.keys(spec.components.schemas).length;
-  assert.equal(
-    provenance('Counted'),
-    `OpenAPI ${spec.openapi}, ${paths} paths, ${operations} operations, ${schemas} schemas`,
-  );
+  assert.deepEqual(provenance().counted, { openapi: spec.openapi, paths, operations, schemas });
 });
 
 test('the committed schema.d.ts is exactly a regeneration of the vendored snapshot', () => {

@@ -1,4 +1,4 @@
-// The boundaries of CLAUDE.md §6 must be seen to fail. Each case lints a deliberate violation as
+// The boundaries of CLAUDE.md, *Architecture rules* must be seen to fail. Each case lints a deliberate violation as
 // if it lived at `file`, through the project's real ESLint configuration, and expects the rule id
 // in the message; each legitimate import next to it must pass. Nothing is written to disk.
 

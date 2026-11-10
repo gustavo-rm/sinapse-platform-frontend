@@ -1,0 +1,17 @@
+{
+  "sourceRepository": "gustavo-rm/sinapse-platform",
+  "sourcePath": "docs/openapi/openapi.json",
+  "sourceCommit": "46b5b3c6372ac8309ed0fc01974e7ebd165aa04b",
+  "sourceCommitNote": "origin/main, 2026-11-09",
+  "lastCommitTouchingFile": "d1a09242980c106d785d30aa1a52157230467f69",
+  "lastCommitTouchingFileDate": "2026-10-25",
+  "sha256": "d709e504097b1bb0d97b7c7c702493cc4784c8fbc0a61d2806982a4290d8afb0",
+  "counted": {
+    "openapi": "3.1.0",
+    "paths": 51,
+    "operations": 59,
+    "schemas": 56
+  },
+  "vendoredOn": "2026-11-09",
+  "generator": "openapi-typescript 7.13.0, in tools/contract/"
+}

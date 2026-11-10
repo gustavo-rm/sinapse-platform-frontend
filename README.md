@@ -19,12 +19,15 @@ premissa de arquitetura, não detalhe de implantação: a sessão viaja em um *c
 
 ### Estado
 
-**Camada de API (FE-3).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
-*lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo), existe a
-camada de comunicação: o contrato OpenAPI do backend copiado para o repositório com seus tipos
-gerados, as 59 operações em `ApiRoutes`, o `ApiClient`, os interceptadores e a política de nova
-tentativa, testados contra MSW e contra o backend local. Ainda não há *store* de sessão, *guard*
-nem tela de produto — chegam em FE-4. O detalhe está em [`docs/ai/STATE.md`](docs/ai/STATE.md).
+**Sessão e acesso (FE-4).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
+*lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo) e a camada
+de API de FE-3 (contrato OpenAPI copiado com tipos gerados, `ApiRoutes`, `ApiClient`,
+interceptadores, política de nova tentativa, MSW), existem o *store* de sessão alimentado por
+`GET /api/v1/me/state`, a cadeia de *guards* que decide para onde cada conta pode ir, a tela de
+entrar, a saída, a troca de senha e o fuso da conta. As telas para onde a cadeia encaminha
+(confirmação de e-mail, consentimentos, configuração) são marcadores de lugar de FE-5; ainda não há
+tela de produto. Como a sessão funciona está em [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); o
+detalhe, em [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     a referência obrigatória de interface
@@ -33,7 +36,7 @@ docs/ai/                  contexto persistente para sessões de IA
 src/styles/tokens.json    a fonte dos tokens
 src/styles/tokens.css     gerado de tokens.json — não editar à mão
 src/styles/sinapse.css    as classes dos componentes
-src/app/                  core, shared, features, layouts — ver CLAUDE.md §4
+src/app/                  core, shared, features, layouts — ver CLAUDE.md, *Layout*
 src/app/core/api/contract/ o contrato OpenAPI copiado do backend e seus tipos gerados
 src/testing/              MSW e fixtures gerados do contrato, só para testes
 tools/contract/           o gerador de tipos, isolado (ver ADR 0002)
@@ -49,7 +52,7 @@ Angular 22 declara. O npm é o que acompanha o Node.
 npm ci                 # instala exatamente o que está no package-lock.json
 npm run contract:install  # instala o gerador de tipos em tools/contract (uma vez)
 npm start              # servidor de desenvolvimento em http://localhost:4200
-npm run lint           # ESLint, incluindo as fronteiras de CLAUDE.md §6
+npm run lint           # ESLint, incluindo as fronteiras de CLAUDE.md, *Architecture rules*
 npm test               # testes unitários (Vitest) e os testes de scripts/ (Node)
 npm run build          # build de produção em dist/sinapse-web
 npm run tokens         # regenera src/styles/tokens.css a partir de tokens.json
@@ -65,7 +68,7 @@ regenera `schema.d.ts` e compara com o arquivo versionado. O CI (`.github/workfl
 `develop` e `main`. Como atualizar o contrato está em `docs/ai/CONTEXT.md`.
 
 TypeScript e Vitest estão fixados (`~6.0.3` e `~4.1.12`). **Não** rode `npm install
-typescript@latest`: a 7.x é incompatível com o Angular 22. Ver `CLAUDE.md` §3.
+typescript@latest`: a 7.x é incompatível com o Angular 22. Ver `CLAUDE.md`, *Stack*.
 
 ### Como usar os estilos
 
@@ -123,12 +126,14 @@ configuration.
 
 ### State
 
-**API layer (FE-3).** On top of FE-2's foundation (structure, lint-checked boundaries, routes and
-layouts, label catalogue, state components, time service), the communication layer exists: the
-backend's OpenAPI contract vendored with its generated types, the 59 operations in `ApiRoutes`,
-`ApiClient`, the interceptors and the retry policy, tested against MSW and against the local
-backend. There is no session store, guard or product screen yet — those come in FE-4. Details in
-[`docs/ai/STATE.md`](docs/ai/STATE.md).
+**Session and access (FE-4).** On top of FE-2's foundation (structure, lint-checked boundaries,
+routes and layouts, label catalogue, state components, time service) and FE-3's API layer (the
+vendored OpenAPI contract with generated types, `ApiRoutes`, `ApiClient`, interceptors, retry
+policy, MSW), there are the session store fed by `GET /api/v1/me/state`, the guard chain that
+decides where each account may go, the sign-in screen, sign-out, the password change and the
+account time zone. The screens the chain routes to (e-mail verification, consents, setup) are FE-5
+placeholders; there is no product screen yet. How the session works is in
+[`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); details in [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     the binding interface reference
@@ -137,7 +142,7 @@ docs/ai/                  persistent context for AI sessions
 src/styles/tokens.json    the source of the tokens
 src/styles/tokens.css     generated from tokens.json — do not edit by hand
 src/styles/sinapse.css    the component classes
-src/app/                  core, shared, features, layouts — see CLAUDE.md §4
+src/app/                  core, shared, features, layouts — see CLAUDE.md, *Layout*
 src/app/core/api/contract/ the backend's vendored OpenAPI contract and its generated types
 src/testing/              MSW and fixtures generated from the contract, for tests only
 tools/contract/           the type generator, isolated (see ADR 0002)
@@ -153,7 +158,7 @@ declares. npm is the one that ships with Node.
 npm ci                 # installs exactly what package-lock.json holds
 npm run contract:install  # installs the type generator in tools/contract (once)
 npm start              # development server on http://localhost:4200
-npm run lint           # ESLint, including the boundaries of CLAUDE.md §6
+npm run lint           # ESLint, including the boundaries of CLAUDE.md, *Architecture rules*
 npm test               # unit tests (Vitest) and the tests under scripts/ (Node)
 npm run build          # production build into dist/sinapse-web
 npm run tokens         # regenerates src/styles/tokens.css from tokens.json
@@ -170,7 +175,7 @@ every push and pull request to `develop` and `main`. How to refresh the contract
 `docs/ai/CONTEXT.md`.
 
 TypeScript and Vitest are pinned (`~6.0.3` and `~4.1.12`). **Do not** run `npm install
-typescript@latest`: 7.x is incompatible with Angular 22. See `CLAUDE.md` §3.
+typescript@latest`: 7.x is incompatible with Angular 22. See `CLAUDE.md`, *Stack*.
 
 ### Using the styles
 

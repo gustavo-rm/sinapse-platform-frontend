@@ -13,11 +13,11 @@
 - O paliativo de ler um 403 de `GET /classrooms` é rejeitado: usa um código de erro como canal de
   informação.
 
-Por isso não existem a casca do professor, as telas da área nem um *layout* para ela
-(`CLAUDE.md` §8; `docs/DESIGN_SYSTEM.md` §7 e §13). Construí-las sugeriria que a área funciona.
+Por isso não existem a casca do professor, as telas da área nem um _layout_ para ela
+(`CLAUDE.md`, _Hard prohibitions_; `docs/DESIGN_SYSTEM.md` §7 e §13). Construí-las sugeriria que a área funciona.
 
 As quatro subpastas (`data/`, `model/`, `ui/`, `pages/`) existem só para seguir a regra de
-`CLAUDE.md` §4 e estão vazias de propósito.
+`CLAUDE.md`, _Layout_ e estão vazias de propósito.
 
 **Desbloqueia quando:** o backend decidir P2 e expor `roles` em `/me/state`.
 
@@ -31,10 +31,10 @@ As quatro subpastas (`data/`, `model/`, `ui/`, `pages/`) existem só para seguir
 - The palliative of reading a 403 from `GET /classrooms` is rejected: it uses an error code as an
   information channel.
 
-So there is no teacher shell, no screen and no layout for this area (`CLAUDE.md` §8;
+So there is no teacher shell, no screen and no layout for this area (`CLAUDE.md`, _Hard prohibitions_;
 `docs/DESIGN_SYSTEM.md` §7 and §13). Building them would suggest that the area works.
 
-The four subfolders (`data/`, `model/`, `ui/`, `pages/`) exist only to follow `CLAUDE.md` §4 and are
+The four subfolders (`data/`, `model/`, `ui/`, `pages/`) exist only to follow `CLAUDE.md`, _Layout_ and are
 empty on purpose.
 
 **Unblocked when:** the backend decides P2 and exposes `roles` in `/me/state`.

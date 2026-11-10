@@ -13,6 +13,7 @@
 // because openapi-typescript 7.13.x declares a peer `typescript ^5.x` and the application pins
 // TypeScript 6.0.x. Install it once with `npm run contract:install`.
 
+import { Buffer } from 'node:buffer';
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
@@ -23,6 +24,21 @@ export const CONTRACT_DIR = resolve(root, 'src/app/core/api/contract');
 export const SNAPSHOT = resolve(CONTRACT_DIR, 'openapi.json');
 export const SCHEMA_DTS = resolve(CONTRACT_DIR, 'schema.d.ts');
 export const PROVENANCE = resolve(CONTRACT_DIR, 'provenance.json');
+
+/**
+ * The snapshot's bytes with every CRLF turned into LF (K-J). The backend has no `.gitattributes`,
+ * so on Windows its `docs/openapi/openapi.json` checks out with CRLF — 131,588 bytes instead of
+ * 127,161 — and a byte copy of it would fail a raw hash although the contract is identical (a
+ * key-by-key comparison of the two gives zero differences). The recorded SHA-256 is of the LF form;
+ * every comparison of the vendored file goes through this.
+ *
+ * @param {Buffer | string} bytes
+ * @returns {Buffer}
+ */
+export function normaliseLineEndings(bytes) {
+  const text = Buffer.isBuffer(bytes) ? bytes.toString('utf8') : bytes;
+  return Buffer.from(text.replace(/\r\n/g, '\n'), 'utf8');
+}
 const TOOLS_DIR = resolve(root, 'tools/contract');
 const GENERATOR = resolve(TOOLS_DIR, 'node_modules/openapi-typescript/bin/cli.js');
 

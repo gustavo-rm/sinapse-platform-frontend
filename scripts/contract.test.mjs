@@ -1,7 +1,8 @@
 // Keeps the vendored contract honest. Run with `npm run test:scripts` (part of `npm test`).
 //
 //   - openapi.json hashes to the SHA-256 recorded in provenance.json: a hand edit of the vendored copy
-//     would otherwise be invisible
+//     would otherwise be invisible. Line endings are normalised to LF first (K-J): a CRLF checkout
+//     of the same contract passes, and the recorded hash is the LF one
 //   - schema.d.ts is exactly a regeneration of openapi.json: a hand edit of the generated file, or
 //     a snapshot refreshed without `npm run contract`, fails here
 //   - schema.d.ts declares types and nothing else: compiled, it emits no JavaScript (ADR 0002)
@@ -20,6 +21,7 @@ import {
   PROVENANCE,
   SCHEMA_DTS,
   SNAPSHOT,
+  normaliseLineEndings,
   regenerate,
 } from './generate-contract.mjs';
 
@@ -74,15 +76,47 @@ test('provenance.json names the source repository, the source commit, the SHA-25
   assert.match(record.vendoredOn, /^\d{4}-\d{2}-\d{2}$/);
 });
 
+/** The drift guard's hash: of the snapshot with its line endings normalised to LF. */
+function contractHash(bytes) {
+  return sha256(normaliseLineEndings(bytes));
+}
+
 test('the vendored openapi.json hashes to the SHA-256 recorded in provenance.json', () => {
-  assert.equal(sha256(readFileSync(SNAPSHOT)), provenance().sha256);
+  assert.equal(contractHash(readFileSync(SNAPSHOT)), provenance().sha256);
 });
 
 test('a one-byte edit of the vendored snapshot changes the hash', () => {
   const bytes = readFileSync(SNAPSHOT);
   const edited = Buffer.from(bytes);
   edited[edited.length - 2] ^= 1;
-  assert.notEqual(sha256(edited), provenance().sha256);
+  assert.notEqual(contractHash(edited), provenance().sha256);
+});
+
+test('a CRLF copy of the same snapshot passes: the hash is of the LF form (K-J)', () => {
+  const lf = normaliseLineEndings(readFileSync(SNAPSHOT));
+  const crlf = Buffer.from(lf.toString('utf8').replace(/\n/g, '\r\n'), 'utf8');
+  // The numbers measured on a Windows checkout of the backend at 46b5b3c.
+  assert.equal(crlf.length, 131_588);
+  assert.equal(sha256(crlf).slice(0, 8), 'c8da37dd');
+  assert.notEqual(sha256(crlf), provenance().sha256, 'the raw CRLF bytes do hash differently');
+  assert.equal(contractHash(crlf), provenance().sha256);
+});
+
+test('the recorded SHA-256 is of the LF form, and the LF form is what is committed', () => {
+  const lf = normaliseLineEndings(readFileSync(SNAPSHOT));
+  assert.equal(lf.length, 127_161);
+  assert.equal(sha256(lf), provenance().sha256);
+  assert.ok(!lf.includes(0x0d), 'no carriage return survives normalisation');
+});
+
+test('normalising line endings does not hide a change of content', () => {
+  const crlf = Buffer.from(
+    normaliseLineEndings(readFileSync(SNAPSHOT)).toString('utf8').replace(/\n/g, '\r\n'),
+    'utf8',
+  );
+  const edited = Buffer.from(crlf);
+  edited[edited.length - 4] ^= 1;
+  assert.notEqual(contractHash(edited), provenance().sha256);
 });
 
 test('the vendored snapshot has the operation and schema counts provenance.json records', () => {

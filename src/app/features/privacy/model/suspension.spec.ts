@@ -43,6 +43,12 @@ describe('suspensionCauseOf — the bootstrap cannot tell the causes apart, thes
     expect(suspensionCauseOf([], [LDP_WITHDRAWN])).toEqual({ kind: 'consent-withdrawn' });
   });
 
+  it('a withdrawn essential consent granted again: still that cause, since the grant does not reactivate (observed, FE-5)', () => {
+    expect(suspensionCauseOf([], [LDP_IN_FORCE, LDP_WITHDRAWN])).toEqual({
+      kind: 'consent-withdrawn',
+    });
+  });
+
   it('ignores requests that are no longer open', () => {
     const closed: ErasureRequestView[] = [
       { ...OPEN, status: 'CANCELLED', cancelledAt: '2026-11-11T00:00:00Z' },

@@ -28,9 +28,11 @@ export interface OpenErasureRequest {
  *
  * - `erasure`: `GET /api/v1/me/erasure-requests` has one `REQUESTED`. The holder may withdraw it,
  *   or take their data.
- * - `consent-withdrawn`: no open request, and `GET /api/v1/consents` has no
- *   `LEARNING_DATA_PROCESSING` in force. MEASURED in FE-5: granting it again answers 201 and the
- *   account stays SUSPENDED, so the screen offers no grant — an action that does nothing.
+ * - `consent-withdrawn`: no open request, and `GET /api/v1/consents` shows the
+ *   `LEARNING_DATA_PROCESSING` consent withdrawn — or none in force. MEASURED in FE-5: granting it
+ *   again answers 201 and the account stays SUSPENDED, so a withdrawn record decides the cause
+ *   even after a new grant (the walk-through showed the screen losing its explanation otherwise),
+ *   and the screen offers no grant — an action that does nothing.
  * - `unknown`: neither. The suspension at the end of the majority grace period is the one other
  *   cause the backend has (ADR 0004), and it cannot happen in this version (registration refuses
  *   minors, K-E); the screen states the situation and promises nothing (D4).
@@ -61,7 +63,10 @@ export function suspensionCauseOf(
       },
     };
   }
-  if (!consentsInForce(history).has('LEARNING_DATA_PROCESSING')) {
+  const essentialWithdrawn = history.some(
+    (record) => record.purpose === 'LEARNING_DATA_PROCESSING' && record.revokedAt !== undefined,
+  );
+  if (essentialWithdrawn || !consentsInForce(history).has('LEARNING_DATA_PROCESSING')) {
     return { kind: 'consent-withdrawn' };
   }
   return { kind: 'unknown' };

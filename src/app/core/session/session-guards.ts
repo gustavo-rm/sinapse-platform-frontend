@@ -40,7 +40,7 @@ async function decide(target: GuardTarget, url: string): Promise<GuardResult> {
     outcome.kind === 'signed-out'
       ? { kind: 'unauthenticated' }
       : { kind: 'state', state: outcome.state };
-  const access = accessTo(bootstrap, target);
+  const access = accessTo(bootstrap, target, store.chainContext());
   if (access === true) {
     if (target === 'anonymized') {
       // Row 2: the account no longer exists as a person's. Nothing of it stays in memory, and the

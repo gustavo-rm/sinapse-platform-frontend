@@ -32,6 +32,17 @@ export type Bootstrap =
   { readonly kind: 'unauthenticated' } | { readonly kind: 'state'; readonly state: AccountState };
 
 /**
+ * What this client knows beyond the bootstrap, held in memory for one session by `SessionStore`.
+ *
+ * `reaffirmationDeferred`: the person chose, on the reaffirmation screen, to keep using the account
+ * for now. ADR 0004 of the backend: at the transition to majority the account is NOT blocked — the
+ * holder is asked, and has a grace period — so row 6 asks and does not hold. FE-5.
+ */
+export interface ChainContext {
+  readonly reaffirmationDeferred?: boolean;
+}
+
+/**
  * The precedence chain: where a person must be, or null when nothing stands in the way of the
  * screen they asked for. A pure function of the bootstrap, so it is tested without a router.
  *
@@ -42,7 +53,7 @@ export type Bootstrap =
  * | 3 | `accountStatus = SUSPENDED`                        | `suspended`        |
  * | 4 | `accountStatus = PENDING_VERIFICATION`             | `verify-email`     |
  * | 5 | `accountStatus = PENDING_GUARDIAN_CONSENT`         | `guardian-consent` |
- * | 6 | `requiresMajorityReaffirmation`                    | `reaffirmation`    |
+ * | 6 | `requiresMajorityReaffirmation`, not deferred      | `reaffirmation`    |
  * | 7 | `pendingConsents` holds a purpose that cannot be declined freely (`holdsOnConsentScreen`) | `consent` |
  * | 8 | `setupComplete` false                              | `setup`            |
  * | 9 | none of the above                                  | null               |
@@ -61,11 +72,14 @@ export type Bootstrap =
  *   SUSPENDED, so `/me/state` never answers PENDING_VERIFICATION. Its screen is the public route
  *   `/verificar-email`, which needs no session; the row stays;
  * - row 5: MEASURED in FE-4.1 — registration refuses a holder below the consent age (K-E);
+ * - row 6: READ in FE-5, not measured — the flag is true only for a holder whose essential consent
+ *   predates their majority, and registration refuses anyone below the consent age (K-E), so every
+ *   consent is the adult holder's own from the start;
  * - row 7: READ in FE-5, not measured — the backend lists only purposes "never acted on" and
  *   "requested on [their] own", and registration must accept `LEARNING_DATA_PROCESSING`, so the one
  *   purpose that holds here is never pending after registration.
  */
-export function gateOf(bootstrap: Bootstrap): Gate | null {
+export function gateOf(bootstrap: Bootstrap, context: ChainContext = {}): Gate | null {
   if (bootstrap.kind === 'unauthenticated') {
     return 'sign-in';
   }
@@ -80,7 +94,7 @@ export function gateOf(bootstrap: Bootstrap): Gate | null {
     case 'PENDING_GUARDIAN_CONSENT':
       return 'guardian-consent';
     case 'ACTIVE':
-      if (state.requiresMajorityReaffirmation) {
+      if (state.requiresMajorityReaffirmation && context.reaffirmationDeferred !== true) {
         return 'reaffirmation';
       }
       if (state.pendingConsents.some(holdsOnConsentScreen)) {
@@ -126,10 +140,24 @@ export type GuardTarget = 'app' | Exclude<Gate, 'sign-in' | 'verify-email'>;
 /**
  * What a guard does for a person who asked for `target`: let them through (`true`), or send them
  * to where the chain says they must be. A gate screen is open only to the person the chain sends
- * there; anyone else is sent on — to their own gate, or into the application.
+ * there; anyone else is sent on — to their own gate, or into the application. One exception: a
+ * person who deferred the reaffirmation may go back to its screen while it is still owed.
  */
-export function accessTo(bootstrap: Bootstrap, target: GuardTarget): true | Gate | 'app' {
-  const gate = gateOf(bootstrap);
+export function accessTo(
+  bootstrap: Bootstrap,
+  target: GuardTarget,
+  context: ChainContext = {},
+): true | Gate | 'app' {
+  const gate = gateOf(bootstrap, context);
+  if (
+    target === 'reaffirmation' &&
+    gate === null &&
+    bootstrap.kind === 'state' &&
+    bootstrap.state.accountStatus === 'ACTIVE' &&
+    bootstrap.state.requiresMajorityReaffirmation
+  ) {
+    return true;
+  }
   if (gate === null) {
     return target === 'app' ? true : 'app';
   }

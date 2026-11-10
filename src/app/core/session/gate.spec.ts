@@ -169,6 +169,38 @@ describe('the guard chain', () => {
   });
 });
 
+describe('the reaffirmation asks and does not hold (ADR 0004)', () => {
+  const owed = stateOf('ACTIVE', true, [], true, 'UTC');
+
+  it('sends a person who owes it to the reaffirmation screen', () => {
+    expect(gateOf({ kind: 'state', state: owed })).toBe('reaffirmation');
+  });
+
+  it('lets them into the application once they deferred it, for this session', () => {
+    expect(gateOf({ kind: 'state', state: owed }, { reaffirmationDeferred: true })).toBeNull();
+    expect(accessTo({ kind: 'state', state: owed }, 'app', { reaffirmationDeferred: true })).toBe(
+      true,
+    );
+  });
+
+  it('still lets them back to its screen while it is owed, and no one else', () => {
+    const deferred = { reaffirmationDeferred: true };
+    expect(accessTo({ kind: 'state', state: owed }, 'reaffirmation', deferred)).toBe(true);
+    const free = stateOf('ACTIVE', false, [], true, 'UTC');
+    expect(accessTo({ kind: 'state', state: free }, 'reaffirmation', deferred)).toBe('app');
+  });
+
+  it('does not let a deferral skip the rows after it', () => {
+    const state = stateOf('ACTIVE', true, ESSENTIAL, false, 'UTC');
+    expect(gateOf({ kind: 'state', state }, { reaffirmationDeferred: true })).toBe('consent');
+  });
+
+  it('never lets a deferral open the application to a suspended account', () => {
+    const state = stateOf('SUSPENDED', true, [], null, 'UTC');
+    expect(gateOf({ kind: 'state', state }, { reaffirmationDeferred: true })).toBe('suspended');
+  });
+});
+
 describe('accessTo', () => {
   const free: AccountState = stateOf('ACTIVE', false, [], true, 'UTC');
   const setup: AccountState = stateOf('ACTIVE', false, [], false, 'UTC');

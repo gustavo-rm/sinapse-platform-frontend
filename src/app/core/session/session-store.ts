@@ -12,7 +12,14 @@ import {
 import { ApiRoutes } from '../api/api-routes';
 import { AccountTimeService } from '../time/account-time.service';
 import { type AccountState, readAccountState } from './account-state';
-import { APP_HOME_PATH, SIGN_IN_PATH } from './gate';
+import {
+  APP_HOME_PATH,
+  type ChainContext,
+  type GuardTarget,
+  SIGN_IN_PATH,
+  accessTo,
+  pathOf,
+} from './gate';
 
 /**
  * Where the store stands.
@@ -41,12 +48,15 @@ export type BootstrapOutcome =
  * - `sign-out-unconfirmed`: signing out did not reach the server, which may still hold the session.
  * - `session-not-established`: the server accepted the credentials, but the very next read found no
  *   session — the browser did not keep or send what the server issued. Not an expiry.
+ * - `email-verified`: `POST /api/v1/email-verifications` answered 204 (FE-5). The person has no
+ *   session yet; signing in is the next step.
  */
 export const SIGN_IN_NOTICES = [
   'session-expired',
   'password-changed',
   'sign-out-unconfirmed',
   'session-not-established',
+  'email-verified',
 ] as const;
 export type SignInNotice = (typeof SIGN_IN_NOTICES)[number];
 
@@ -81,6 +91,7 @@ export class SessionStore {
   private readonly ended = signal(false);
   private readonly attempted = signal<string | null>(null);
   private readonly pendingNotice = signal<SignInNotice | null>(null);
+  private readonly deferredReaffirmation = signal(false);
 
   /** True while `establish()` reads the state right after a successful sign-in. */
   private establishing = false;
@@ -102,6 +113,10 @@ export class SessionStore {
   readonly attemptedRoute = this.attempted.asReadonly();
   /** What the sign-in screen should say, if anything. */
   readonly notice = this.pendingNotice.asReadonly();
+  /** What the guard chain needs besides the bootstrap: in memory, for this session only. */
+  readonly chainContext = computed<ChainContext>(() => ({
+    reaffirmationDeferred: this.deferredReaffirmation(),
+  }));
 
   /**
    * The bootstrap, read once. While a read is in flight every caller gets the same promise; once
@@ -173,6 +188,38 @@ export class SessionStore {
     void this.router.navigateByUrl(SIGN_IN_PATH);
   }
 
+  /**
+   * After a write that changed the state — a consent granted or withdrawn, a reaffirmation, an
+   * erasure request withdrawn: reads the state again and lets the guard chain decide where the
+   * person goes from the screen guarded as `target`. Nobody navigates by hand. A screen of the
+   * application passes `'app'`. Signed out: the expiry path has already run. Failed: the person
+   * stays, and the caller shows why.
+   */
+  async settle(target: GuardTarget): Promise<BootstrapOutcome> {
+    const outcome = await this.refresh();
+    if (outcome.kind === 'signed-in') {
+      const access = accessTo({ kind: 'state', state: outcome.state }, target, this.chainContext());
+      if (access !== true) {
+        await this.router.navigateByUrl(access === 'app' ? APP_HOME_PATH : pathOf(access));
+      }
+    }
+    return outcome;
+  }
+
+  /**
+   * The person chose to keep using the account before reaffirming (backend ADR 0004: the account is not
+   * blocked during the grace period). Held in memory until the session ends; the screen asks again
+   * in the next one.
+   */
+  deferReaffirmation(): void {
+    this.deferredReaffirmation.set(true);
+  }
+
+  /** Sets what the sign-in screen says, without touching the session: for a person with none. */
+  announce(notice: SignInNotice): void {
+    this.pendingNotice.set(notice);
+  }
+
   /** Clears the store without navigating: for the terminal screen of an anonymised account. */
   forget(): void {
     this.clear();
@@ -209,6 +256,7 @@ export class SessionStore {
     this.ended.set(false);
     this.attempted.set(null);
     this.pendingNotice.set(null);
+    this.deferredReaffirmation.set(false);
     this.phase.set('unknown');
     return back;
   }
@@ -326,6 +374,7 @@ export class SessionStore {
     this.ended.set(true);
     this.current.set(null);
     this.lastFailure.set(null);
+    this.deferredReaffirmation.set(false);
     this.phase.set('signed-out');
     this.time.setAccountZone(null);
   }

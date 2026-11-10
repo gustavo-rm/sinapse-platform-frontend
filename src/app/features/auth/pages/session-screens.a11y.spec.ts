@@ -51,20 +51,17 @@ function keyboardPath(root: HTMLElement): string[] {
   });
 }
 
+/**
+ * The gate screens that are still a heading and a sentence. The consent, reaffirmation and
+ * suspended screens have flows since FE-5, and their own specs (`features/privacy/pages/`); the
+ * verification screen is public (`verify-email-page.spec.ts`).
+ */
 const GATE_SCREENS: [string, Record<string, unknown>, string][] = [
-  ['/conta-suspensa', { accountStatus: 'SUSPENDED' }, 'Conta suspensa'],
-  ['/verificar-email', { accountStatus: 'PENDING_VERIFICATION' }, 'Confirme seu e-mail'],
   [
     '/consentimento-do-responsavel',
     { accountStatus: 'PENDING_GUARDIAN_CONSENT' },
     'Consentimento do responsável',
   ],
-  [
-    '/reafirmar-consentimento',
-    { requiresMajorityReaffirmation: true },
-    'Reafirme seu consentimento',
-  ],
-  ['/consentimentos', { pendingConsents: ['ACADEMIC_RESEARCH'] }, 'Consentimentos pendentes'],
   ['/configurar', { setupComplete: false }, 'Configure seus estudos'],
 ];
 

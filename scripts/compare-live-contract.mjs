@@ -22,6 +22,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { normaliseLineEndings } from './generate-contract.mjs';
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SNAPSHOT = resolve(root, 'src/app/core/api/contract/openapi.json');
 const PROBE_PATH_PREFIX = '/api/v1/probe/';
@@ -83,7 +85,8 @@ if (isMain) {
     process.exit(2);
   }
   const raw = await response.text();
-  const snapshot = readFileSync(SNAPSHOT, 'utf8');
+  // A CRLF checkout of the vendored file is the same contract (K-J).
+  const snapshot = normaliseLineEndings(readFileSync(SNAPSHOT)).toString('utf8');
   console.log(`raw live document byte-identical to the snapshot: ${raw === snapshot}`);
 
   const live = JSON.parse(raw);

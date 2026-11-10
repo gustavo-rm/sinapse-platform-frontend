@@ -133,7 +133,7 @@ describe('the guarded routes', () => {
       'Consentimento do responsável',
     ],
     [{ requiresMajorityReaffirmation: true }, 'reaffirmation', 'Reafirme seu consentimento'],
-    [{ pendingConsents: ['INSTITUTION_SHARING'] }, 'consent', 'Consentimentos pendentes'],
+    [{ pendingConsents: ['LEARNING_DATA_PROCESSING'] }, 'consent', 'Consentimentos pendentes'],
     [{ setupComplete: false }, 'setup', 'Configure seus estudos'],
   ])('sends %j to the %s screen', async (overrides, gate, heading) => {
     server.use(stateAt(() => stateBody(overrides)));
@@ -179,10 +179,28 @@ describe('the guarded routes', () => {
   });
 
   it('sends a person away from a gate screen that is not theirs, to their own', async () => {
-    server.use(stateAt(() => stateBody({ pendingConsents: ['ACADEMIC_RESEARCH'] })));
+    server.use(stateAt(() => stateBody({ pendingConsents: ['LEARNING_DATA_PROCESSING'] })));
     const { harness, router } = await setUp();
     await harness.navigateByUrl('/configurar');
     expect(router.url).toBe('/consentimentos');
+  });
+
+  it('lets an account that declined research into the application, and off the consent screen (K-H)', async () => {
+    server.use(stateAt(() => stateBody({ pendingConsents: ['ACADEMIC_RESEARCH'] })));
+    const { harness, router } = await setUp();
+    await harness.navigateByUrl('/hoje');
+    expect(router.url).toBe('/hoje');
+    await harness.navigateByUrl('/consentimentos');
+    expect(router.url).toBe('/hoje');
+  });
+
+  it('opens the verification screen to anyone: it is public, not a gate (FE-5)', async () => {
+    server.use(stateAt(() => stateBody({})));
+    const { harness, router, store } = await setUp();
+    await harness.navigateByUrl('/verificar-email');
+    expect(router.url).toBe('/verificar-email');
+    // No bootstrap was needed to open it.
+    expect(store.status()).toBe('unknown');
   });
 
   it('clears the store on the terminal screen and offers no way back', async () => {

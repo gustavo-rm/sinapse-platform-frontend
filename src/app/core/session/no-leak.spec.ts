@@ -23,7 +23,9 @@ const EMAIL = 'pessoa.vazamento@example.com';
 const PASSWORD = 'senha-que-nao-pode-vazar-91';
 const NEW_PASSWORD = 'nova-senha-que-nao-pode-vazar-92';
 const TOKEN = 'token-opaco-que-nao-pode-vazar-93';
-const SECRETS = [EMAIL, PASSWORD, NEW_PASSWORD, TOKEN];
+/** An e-mail verification token: a single-use credential that arrives in a URL (FE-5). */
+const VERIFICATION_TOKEN = 'verificacao-de-uso-unico-que-nao-pode-vazar-94';
+const SECRETS = [EMAIL, PASSWORD, NEW_PASSWORD, TOKEN, VERIFICATION_TOKEN];
 
 function activeState(): JsonBodyType {
   return {
@@ -221,6 +223,73 @@ describe('no secret reaches the console or storage', () => {
     await open('/conta');
     await TestBed.inject(SessionStore).signOut();
     assertNothingLeaked();
+  });
+
+  /** What the verification token must never be found in once the flow is over. */
+  function assertVerificationTokenGone(root: () => HTMLElement): void {
+    assertNothingLeaked();
+    expect(document.title).not.toContain(VERIFICATION_TOKEN);
+    expect(window.location.href).not.toContain(VERIFICATION_TOKEN);
+    expect(TestBed.inject(Router).url).not.toContain(VERIFICATION_TOKEN);
+    expect(root().textContent).not.toContain(VERIFICATION_TOKEN);
+    expect(JSON.stringify(TestBed.inject(SessionStore).state())).not.toContain(VERIFICATION_TOKEN);
+  }
+
+  it.each([
+    ['204', () => new HttpResponse(null, { status: 204 })],
+    ['404', () => leakyProblem('urn:sinapse:problem:resource-not-found', 404)],
+    ['429', () => leakyProblem('urn:sinapse:problem:rate-limit-exceeded', 429)],
+    ['500', () => leakyProblem('urn:sinapse:problem:internal-error', 500)],
+  ])('through an e-mail verification by URL answered %s', async (_name, answer) => {
+    let received: unknown = null;
+    server.use(
+      http.post(ApiRoutes.identity.emailVerifications, async ({ request }) => {
+        received = await request.json();
+        return answer();
+      }),
+    );
+    const { root, harness } = await open(`/verificar-email?token=${VERIFICATION_TOKEN}`);
+    await vi.waitFor(() => expect(received).toEqual({ token: VERIFICATION_TOKEN }));
+    await harness.fixture.whenStable();
+
+    assertVerificationTokenGone(root);
+  });
+
+  it.each([
+    ['204', () => new HttpResponse(null, { status: 204 })],
+    ['404', () => leakyProblem('urn:sinapse:problem:resource-not-found', 404)],
+  ])('through an e-mail verification by a pasted token answered %s', async (_name, answer) => {
+    let received: unknown = null;
+    server.use(
+      http.post(ApiRoutes.identity.emailVerifications, async ({ request }) => {
+        received = await request.json();
+        return answer();
+      }),
+    );
+    const { root, type, submit } = await open('/verificar-email');
+    type('verification-token', VERIFICATION_TOKEN);
+    await submit();
+    await vi.waitFor(() => expect(received).toEqual({ token: VERIFICATION_TOKEN }));
+
+    // The field may hold what the person pasted until they leave; nothing else may.
+    const field = root().querySelector<HTMLInputElement>('#verification-token');
+    if (field) {
+      field.value = '';
+    }
+    assertVerificationTokenGone(root);
+  });
+
+  it('catches a verification token left in the URL (negative control)', async () => {
+    server.use(
+      http.post(
+        ApiRoutes.identity.emailVerifications,
+        () => new HttpResponse(null, { status: 204 }),
+      ),
+    );
+    const { root } = await open('/verificar-email');
+    window.history.replaceState(null, '', `/verificar-email?token=${VERIFICATION_TOKEN}`);
+    expect(() => assertVerificationTokenGone(root)).toThrow();
+    window.history.replaceState(null, '', '/');
   });
 
   it('through a bootstrap whose body is unreadable and carries a secret', async () => {

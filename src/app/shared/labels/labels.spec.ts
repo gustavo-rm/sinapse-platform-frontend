@@ -24,7 +24,10 @@ import { THEME_CHOICES } from '../../core/theme/theme.service';
 import { ACCOUNT_STATUS_LABELS } from './account-status.labels';
 import { CLASSROOM_STATUS_LABELS } from './classroom-status.labels';
 import { CONSENT_GRANTED_BY_LABELS } from './consent-granted-by.labels';
+import { CONSENT_PURPOSE_KIND_LABELS } from './consent-purpose-kind.labels';
+import { CONSENT_PURPOSE_NOTE_LABELS } from './consent-purpose-note.labels';
 import { CONSENT_PURPOSE_LABELS } from './consent-purpose.labels';
+import { CONSENT_WITHDRAWAL_LABELS } from './consent-withdrawal.labels';
 import { DAY_OF_WEEK_LABELS } from './day-of-week.labels';
 import { DURATION_SOURCE_LABELS } from './duration-source.labels';
 import { ENROLLMENT_END_REASON_LABELS } from './enrollment-end-reason.labels';
@@ -47,6 +50,9 @@ import { TRANSPORT_FAILURE_LABELS } from './transport-failure.labels';
 const CATALOGUES: [string, readonly string[], Record<string, string>][] = [
   ['AccountStatus', ACCOUNT_STATUSES, ACCOUNT_STATUS_LABELS],
   ['ConsentPurpose', CONSENT_PURPOSES, CONSENT_PURPOSE_LABELS],
+  ['ConsentPurpose (kind)', CONSENT_PURPOSES, CONSENT_PURPOSE_KIND_LABELS],
+  ['ConsentPurpose (note)', CONSENT_PURPOSES, CONSENT_PURPOSE_NOTE_LABELS],
+  ['ConsentPurpose (withdrawal)', CONSENT_PURPOSES, CONSENT_WITHDRAWAL_LABELS],
   ['ConsentGrantedBy', CONSENT_GRANTED_BY, CONSENT_GRANTED_BY_LABELS],
   ['GoalStatus', GOAL_STATUSES, GOAL_STATUS_LABELS],
   ['PlanStatus', PLAN_STATUSES, PLAN_STATUS_LABELS],
@@ -73,8 +79,8 @@ const JUDGEMENT =
   /(?<!\p{L})(ruim|insuficiente|parab[eé]ns|[oó]tim[oa]|excelente|frac[oa]|p[eé]ssim[oa]|baix[oa]|bom|boa|mal|incr[ií]vel|perfeit[oa])(?!\p{L})/iu;
 
 describe('label catalogue', () => {
-  it('covers the 16 domain enums, DayOfWeek, the problem types, and the client unions: theme choice, transport failure, sign-in notice', () => {
-    expect(CATALOGUES).toHaveLength(21);
+  it('covers the 16 domain enums, DayOfWeek, the problem types, the client unions (theme choice, transport failure, sign-in notice) and three more texts per consent purpose', () => {
+    expect(CATALOGUES).toHaveLength(24);
   });
 
   it('knows exactly the 17 problem types of the backend catalogue', () => {

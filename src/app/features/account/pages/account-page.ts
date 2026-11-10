@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SessionStore } from '../../../core/session/session-store';
 
 /**
- * The "Conta" area. Only what FE-4 needs of it: the way to the password change and signing out.
+ * The "Conta" area: the password change, the consents (FE-5), the reaffirmation while it is owed
+ * and was deferred, and signing out.
  * Availability, goals, classrooms, privacy and data live here too (`docs/DESIGN_SYSTEM.md` §7),
  * and are not built yet.
  */
@@ -15,6 +16,16 @@ import { SessionStore } from '../../../core/session/session-store';
     <h1 class="display-md">Conta</h1>
     <ul class="actions">
       <li><a class="sn-btn sn-btn--secondary" routerLink="/conta/senha">Trocar senha</a></li>
+      <li>
+        <a class="sn-btn sn-btn--secondary" routerLink="/conta/consentimentos">Consentimentos</a>
+      </li>
+      @if (reaffirmationOwed()) {
+        <li>
+          <a class="sn-btn sn-btn--secondary" routerLink="/reafirmar-consentimento">
+            Reafirmar consentimento
+          </a>
+        </li>
+      }
       <li>
         <button
           type="button"
@@ -48,6 +59,11 @@ import { SessionStore } from '../../../core/session/session-store';
 export class AccountPage {
   private readonly session = inject(SessionStore);
   protected readonly signingOut = signal(false);
+  /** A reaffirmation the person deferred (backend ADR 0004: the account is not blocked meanwhile). */
+  protected readonly reaffirmationOwed = computed(() => {
+    const state = this.session.state();
+    return state?.accountStatus === 'ACTIVE' && state.requiresMajorityReaffirmation;
+  });
 
   protected async signOut(): Promise<void> {
     this.signingOut.set(true);

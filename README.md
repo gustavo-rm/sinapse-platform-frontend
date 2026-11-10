@@ -19,12 +19,15 @@ premissa de arquitetura, não detalhe de implantação: a sessão viaja em um *c
 
 ### Estado
 
-**Camada de API (FE-3).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
-*lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo), existe a
-camada de comunicação: o contrato OpenAPI do backend copiado para o repositório com seus tipos
-gerados, as 59 operações em `ApiRoutes`, o `ApiClient`, os interceptadores e a política de nova
-tentativa, testados contra MSW e contra o backend local. Ainda não há *store* de sessão, *guard*
-nem tela de produto — chegam em FE-4. O detalhe está em [`docs/ai/STATE.md`](docs/ai/STATE.md).
+**Sessão e acesso (FE-4).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
+*lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo) e a camada
+de API de FE-3 (contrato OpenAPI copiado com tipos gerados, `ApiRoutes`, `ApiClient`,
+interceptadores, política de nova tentativa, MSW), existem o *store* de sessão alimentado por
+`GET /api/v1/me/state`, a cadeia de *guards* que decide para onde cada conta pode ir, a tela de
+entrar, a saída, a troca de senha e o fuso da conta. As telas para onde a cadeia encaminha
+(confirmação de e-mail, consentimentos, configuração) são marcadores de lugar de FE-5; ainda não há
+tela de produto. Como a sessão funciona está em [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); o
+detalhe, em [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     a referência obrigatória de interface
@@ -123,12 +126,14 @@ configuration.
 
 ### State
 
-**API layer (FE-3).** On top of FE-2's foundation (structure, lint-checked boundaries, routes and
-layouts, label catalogue, state components, time service), the communication layer exists: the
-backend's OpenAPI contract vendored with its generated types, the 59 operations in `ApiRoutes`,
-`ApiClient`, the interceptors and the retry policy, tested against MSW and against the local
-backend. There is no session store, guard or product screen yet — those come in FE-4. Details in
-[`docs/ai/STATE.md`](docs/ai/STATE.md).
+**Session and access (FE-4).** On top of FE-2's foundation (structure, lint-checked boundaries,
+routes and layouts, label catalogue, state components, time service) and FE-3's API layer (the
+vendored OpenAPI contract with generated types, `ApiRoutes`, `ApiClient`, interceptors, retry
+policy, MSW), there are the session store fed by `GET /api/v1/me/state`, the guard chain that
+decides where each account may go, the sign-in screen, sign-out, the password change and the
+account time zone. The screens the chain routes to (e-mail verification, consents, setup) are FE-5
+placeholders; there is no product screen yet. How the session works is in
+[`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); details in [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     the binding interface reference

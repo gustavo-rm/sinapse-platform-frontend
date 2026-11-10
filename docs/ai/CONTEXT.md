@@ -105,6 +105,73 @@ contract review):
    `normalised … byte-identical … true`.
 8. Update the baseline commit in this file and in `STATE.md`.
 
+## How the session works, end to end
+
+Built in FE-4. Everything below is in `src/app/core/session/` unless named otherwise.
+
+**The session is the server's.** `POST /api/v1/sessions` sets an opaque token as an `HttpOnly;
+Secure; SameSite=Strict; Path=/api/v1` cookie and also returns it in the body for bearer clients.
+This client sends cookies (`withCredentials`), drops the body as it arrives (`features/auth/data/
+sign-in.ts`), and writes nothing anywhere: no web storage, no IndexedDB, no cookie by script
+(`scripts/style-literals.test.mjs` refuses them in production code; `no-leak.spec.ts` proves no
+password, token or e-mail reaches the console or storage through every flow). Because the cookie is
+`HttpOnly`, this client can never remove it: only the server ends a session.
+
+**One store, one read.** `SessionStore` (`session-store.ts`) is the only caller of
+`GET /api/v1/me/state`. `ensureLoaded()` shares one in-flight read and keeps the answer;
+`refresh()` reads again without a navigation — call it after anything that changes the state
+(consent given, setup done, a plan generation finished, a sign-in) — and keeps the state it had
+if it fails. The read is imperative and the state is exposed as signals (ADR 0003). Statuses:
+`unknown` → `loading` → `signed-in` | `signed-out` | `failed`.
+
+**The body is read strictly** (`account-state.ts`, decision D1 in `STATE.md`). `accountStatus`,
+`requiresMajorityReaffirmation`, `timeZone`, `pendingConsents`, and `setupComplete` for an ACTIVE
+account are required: one missing or out of contract makes the bootstrap a
+`TransportFailure('unreadable')`, never a default. `setupComplete` may be empty for any other
+status (the route's own description says the readiness flag comes back empty for a holder whose
+data may not be processed, and the chain decides those statuses first). The three identifiers
+accept absent and `null`, both meaning none.
+
+**The guard chain** (`gate.ts`, a pure function; `session-guards.ts`, the guards). Every child of
+the student layout runs `sessionGuard`; each gate screen runs `gateGuard(gate)` and opens only for
+the person the chain sends there. Precedence: 401 → `/entrar` (remembering the route) ·
+`ANONYMIZED` → `/conta-encerrada` (store cleared, no way back) · `SUSPENDED` → `/conta-suspensa` ·
+`PENDING_VERIFICATION` → `/verificar-email` · `PENDING_GUARDIAN_CONSENT` →
+`/consentimento-do-responsavel` · `requiresMajorityReaffirmation` → `/reafirmar-consentimento` ·
+`pendingConsents` not empty → `/consentimentos` · `setupComplete` false → `/configurar` · else the
+requested route. A plan being generated is never a gate. A bootstrap that failed — network,
+unreadable, 5xx, 429 — goes to `/indisponivel`, which shows the error or the rate-limit notice and
+asks again. These paths are this client's screens, not backend routes; the four onboarding ones
+are FE-5 placeholders.
+
+**Ending a session.** Three ways, all in the store, all landing on `/entrar`:
+
+- `expire()` — a request answered `urn:sinapse:problem:unauthenticated`. Called by
+  `sessionExpiryInterceptor`, once per session however many requests fail together; it remembers
+  the route the person was on (or was navigating to), and the sign-in screen says the session
+  ended if the person had been signed in. Not for the three requests whose caller handles the 401:
+  `POST /sessions` (one message for every refusal, never probed), `POST /password-changes` (D2
+  below) and `DELETE /sessions/current` (signing out).
+- `signOut()` — `DELETE /api/v1/sessions/current`. 204 or 401: clear and go. Anything else: clear
+  and go, and say the server did not confirm, so the session may still work in this browser.
+- `end('password-changed')` — after the 204 of `POST /api/v1/password-changes`, which ends every
+  session of the account; nobody waits for a 401.
+
+**The password-change probe** (decision D2, `features/account/data/password-change.ts`). That
+route's 401 means either "no session" or "wrong current password". On a 401 the store re-reads the
+state once: signed in → the current password is wrong, shown on its field; signed out → the probe's
+own 401 has gone through `expire()`; failed → nothing can be told, the error state shows and the
+session is kept. Delete the probe when the backend gives a refused credential its own problem type
+(K-C).
+
+**After sign-in** the store `begin()`s a new session (forgetting the remembered route, which lives
+only in memory and only until then), reads the state, and the person goes to the remembered route
+or `/hoje` — through the guard chain, which a sign-in never bypasses.
+
+**The account time zone.** After every successful read the store passes `timeZone` to
+`AccountTimeService.setAccountZone`, which validates it by building a formatter inside a
+try/catch; an unusable name keeps UTC and warns once in development. Ending the session empties it.
+
 ## Conventions
 
 In `CLAUDE.md`: language standard, Conventional Commits, branch naming, the architecture rules

@@ -23,19 +23,26 @@ the backend's `docs/FLUXO_DE_PLANO_FRONTEND.md`.
 
 ## 2. State
 
-**API layer (FE-3).** On top of FE-2's foundation (structure, lint boundaries, routing skeleton
-and layouts, the label catalogue, the four shared state components and the time service): the
-vendored contract and its generated types, `ApiRoutes`, `ApiClient`, the interceptor chain, the
-retry policy, and MSW with generated fixtures. There is no session store, no guard and no product
-screen yet — those are FE-4. Change detection is zoneless (`docs/adr/0001-deteccao-de-mudancas.md`).
-Types are generated and the client is hand-written (`docs/adr/0002-tipos-gerados-cliente-escrito.md`).
+**Session and access (FE-4).** On top of FE-2's foundation (structure, lint boundaries, routing
+skeleton and layouts, the label catalogue, the four shared state components and the time service)
+and FE-3's API layer (the vendored contract and its generated types, `ApiRoutes`, `ApiClient`, the
+interceptor chain, the retry policy, MSW with generated fixtures): `SessionStore`, the only caller
+of `GET /api/v1/me/state`; the guard chain that decides where an account may go; the sign-in
+screen; sign-out; the password change with its local clear; and the account time zone. The flows
+the chain routes to — e-mail verification, consents, reaffirmation, setup — are placeholders for
+FE-5, and there is no product screen yet. Change detection is zoneless
+(`docs/adr/0001-deteccao-de-mudancas.md`). Types are generated and the client is hand-written
+(`docs/adr/0002-tipos-gerados-cliente-escrito.md`). The session state is read imperatively and
+exposed as signals (`docs/adr/0003-leitura-imperativa-do-estado-de-sessao.md`). How the session works
+end to end is in `docs/ai/CONTEXT.md`.
 
 ## 3. Stack
 
 - Angular 22, standalone components, signals
 - **TypeScript 6.0.x** — `@angular/compiler-cli` declares `typescript >=6.0 <6.1`
 - `@angular/build` (esbuild + Vite)
-- `httpResource` from `@angular/common/http` for remote reads (`@publicApi` since 22.0)
+- `httpResource` from `@angular/common/http` for remote reads (`@publicApi` since 22.0); the session
+  bootstrap, which a route guard awaits, is the one imperative read (ADR 0003)
 - Reactive Forms, typed
 - **Vitest 4.1.x** — `@angular/build` 22.0 and 22.1 declare `vitest ^4.0.8`; from 22.2.0 the range
   is `^4.0.8 || ^5.0.0`
@@ -193,6 +200,12 @@ A task is not done when it compiles. It is done when all of the following hold:
 5. `npm run lint`, `npm run test` and `npm run build` pass
 6. Contract fixtures regenerated if the OpenAPI snapshot moved, and the drift test green
 7. Documentation updated
+
+Before any tag on `main`, also: `src/app/core/api/live-backend.spec.ts` run and green against a
+backend at the commit named in `src/app/core/api/contract/provenance.json`, under the `local`
+profile (`SINAPSE_LIVE_API=… npx ng test --watch=false --include=src/app/core/api/live-backend.spec.ts`).
+CI has no backend and skips that spec, so a green CI does not show that this client can talk to
+the server it was built against.
 
 When fixing a bug, add the regression test first.
 

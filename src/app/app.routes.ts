@@ -60,15 +60,17 @@ export const routes: Routes = [
         title: 'Conta suspensa · SINAPSE',
         canActivate: [gateGuard('suspended')],
         loadComponent: () =>
-          import('./features/auth/pages/account-status-pages').then((m) => m.AccountSuspendedPage),
+          import('./features/privacy/pages/account-suspended-page').then(
+            (m) => m.AccountSuspendedPage,
+          ),
       },
+      // PUBLIC, not a gate screen (FE-5): reached by a link with `?token=`, with no session.
+      // Row 4 of the chain still names this path; the route itself has no guard.
       {
         path: at('verify-email'),
         title: 'Confirme seu e-mail · SINAPSE',
         loadComponent: () =>
-          import('./features/onboarding/pages/onboarding-placeholders').then(
-            (m) => m.VerifyEmailPage,
-          ),
+          import('./features/auth/pages/verify-email-page').then((m) => m.VerifyEmailPage),
       },
       {
         path: at('guardian-consent'),
@@ -84,18 +86,14 @@ export const routes: Routes = [
         title: 'Reafirme seu consentimento · SINAPSE',
         canActivate: [gateGuard('reaffirmation')],
         loadComponent: () =>
-          import('./features/onboarding/pages/onboarding-placeholders').then(
-            (m) => m.ReaffirmationPage,
-          ),
+          import('./features/privacy/pages/reaffirmation-page').then((m) => m.ReaffirmationPage),
       },
       {
         path: at('consent'),
         title: 'Consentimentos pendentes · SINAPSE',
         canActivate: [gateGuard('consent')],
         loadComponent: () =>
-          import('./features/onboarding/pages/onboarding-placeholders').then(
-            (m) => m.PendingConsentsPage,
-          ),
+          import('./features/privacy/pages/consent-gate-page').then((m) => m.ConsentGatePage),
       },
       {
         path: at('setup'),
@@ -128,6 +126,15 @@ export const routes: Routes = [
         path: 'plano',
         title: 'Plano · SINAPSE',
         loadChildren: () => import('./features/plan/pages/plan.routes').then((m) => m.PLAN_ROUTES),
+      },
+      // Before 'conta', which would otherwise take the whole path into its own routes.
+      {
+        path: 'conta/consentimentos',
+        title: 'Consentimentos · SINAPSE',
+        loadComponent: () =>
+          import('./features/privacy/pages/consent-settings-page').then(
+            (m) => m.ConsentSettingsPage,
+          ),
       },
       {
         path: 'conta',

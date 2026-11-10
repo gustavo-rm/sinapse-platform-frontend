@@ -1,17 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 /*
- * PLACEHOLDERS, FE-5's. The guard chain (`core/session/gate.ts`) sends a person to each of these
- * screens; the flow behind each is built in FE-5, and nothing here anticipates it. Each is a
- * heading and one sentence, and no control: a control would promise a path that does not exist
- * yet. Signing out stays possible from the public layout around them.
+ * The two gate screens that have no flow yet. The guard chain (`core/session/gate.ts`) sends a
+ * person to each; each is a heading and one sentence, and no control: a control would promise a
+ * path that does not exist. Signing out stays possible from the public layout around them.
  *
- * What exists behind them in the backend (snapshot of `sinapse-platform@46b5b3c`):
- * - verify e-mail: `POST /api/v1/email-verifications` consumes a token; no operation re-sends it (K-F);
- * - guardian consent: no operation completes it, and registration refuses minors in this version (K-E);
- * - reaffirmation: `POST /api/v1/consents/reaffirmation`;
- * - pending consents: `GET /api/v1/terms` and `POST /api/v1/consents`;
- * - setup: `POST /api/v1/availability` and `POST /api/v1/goals`.
+ * - guardian consent: no operation completes it, and registration refuses minors in this version
+ *   (K-E). A dead end by necessity, and unreachable today (row 5, measured in FE-4.1);
+ * - setup: `POST /api/v1/availability` and `POST /api/v1/goals` — FE-7.
+ *
+ * The consent, reaffirmation and suspended screens are `features/privacy/pages/` (FE-5); the
+ * e-mail verification screen is the public `features/auth/pages/verify-email-page.ts`.
  */
 
 const STYLES = `
@@ -19,18 +18,6 @@ const STYLES = `
   h1 { margin: 0 0 var(--space-4); }
   p { margin: 0; color: var(--ink-muted); }
 `;
-
-/** FE-5. Row 4 of the chain: `accountStatus = PENDING_VERIFICATION`. */
-@Component({
-  selector: 'sn-verify-email-page',
-  template: `
-    <h1 class="display-md">Confirme seu e-mail</h1>
-    <p class="body">Esta conta aguarda a confirmação do endereço de e-mail.</p>
-  `,
-  styles: STYLES,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class VerifyEmailPage {}
 
 /**
  * FE-5. Row 5: `accountStatus = PENDING_GUARDIAN_CONSENT`. A dead end by necessity: no backend
@@ -50,34 +37,7 @@ export class VerifyEmailPage {}
 })
 export class GuardianConsentPage {}
 
-/** FE-5. Row 6: `requiresMajorityReaffirmation`. */
-@Component({
-  selector: 'sn-reaffirmation-page',
-  template: `
-    <h1 class="display-md">Reafirme seu consentimento</h1>
-    <p class="body">
-      O consentimento desta conta foi dado por um responsável e agora precisa ser reafirmado em seu
-      próprio nome.
-    </p>
-  `,
-  styles: STYLES,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ReaffirmationPage {}
-
-/** FE-5. Row 7: `pendingConsents` not empty. */
-@Component({
-  selector: 'sn-pending-consents-page',
-  template: `
-    <h1 class="display-md">Consentimentos pendentes</h1>
-    <p class="body">Há consentimentos desta conta que ainda precisam de uma resposta sua.</p>
-  `,
-  styles: STYLES,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class PendingConsentsPage {}
-
-/** FE-5. Row 8: `setupComplete` false. */
+/** Row 8: `setupComplete` false. FE-7. */
 @Component({
   selector: 'sn-setup-page',
   template: `

@@ -185,3 +185,24 @@ describe('AccountTimeService', () => {
     });
   });
 });
+
+describe('AccountTimeService with no zone by status', () => {
+  it('keeps UTC without the development warning when the zone is absent by status', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const time = TestBed.inject(AccountTimeService);
+    time.setAccountZone(null, true);
+    expect(time.formatInstant('2026-03-10T01:30:00Z')).toBe('10/03/2026, 01:30');
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('warns again once a zone is expected and missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const time = TestBed.inject(AccountTimeService);
+    time.setAccountZone(null, true);
+    time.setAccountZone(null);
+    time.formatInstant('2026-03-10T01:30:00Z');
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+});

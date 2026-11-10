@@ -243,7 +243,8 @@ export class SessionStore {
     this.current.set(reading.state);
     this.lastFailure.set(null);
     this.phase.set('signed-in');
-    this.time.setAccountZone(reading.state.timeZone);
+    // A null zone comes only with a non-ACTIVE status (readAccountState): UTC, without a warning.
+    this.time.setAccountZone(reading.state.timeZone, reading.state.timeZone === null);
     return { kind: 'signed-in', state: reading.state };
   }
 

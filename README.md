@@ -112,8 +112,10 @@ Para ter uma conta: `POST /api/v1/accounts` (o texto dos termos vem de `GET /api
 perfil `local` publica três textos marcados `dev-0`, que **não** são termos de consentimento). Não
 inclua `INSTITUTION_SHARING` no cadastro — o servidor recusa; esse consentimento é dado ao aceitar
 um convite. O perfil `local` não envia e-mail: o *token* de verificação aparece no log do backend
-(`DEV ONLY - not a delivery`), e é consumido com `POST /api/v1/email-verifications`. Antes disso a
-conta não consegue entrar.
+(`DEV ONLY - not a delivery`). Para consumi-lo por este cliente, abra
+`http://localhost:4200/verificar-email?token=<token>` ou cole o *token* no campo de
+`/verificar-email` — essa rota e esse parâmetro são o contrato que o link do e-mail do backend deve
+seguir (`docs/ai/CONTEXT.md`). Antes disso a conta não consegue entrar.
 
 O *cookie* de sessão observado: `sinapse_session`, `Path=/api/v1`, `HttpOnly`,
 `SameSite=Strict`, 30 dias, e **sem** `Secure` no perfil `local`
@@ -245,8 +247,10 @@ To get an account: `POST /api/v1/accounts` (the terms come from `GET /api/v1/ter
 profile publishes three wordings marked `dev-0`, which are **not** consent terms). Leave
 `INSTITUTION_SHARING` out of the registration — the server refuses it; that consent is given when
 redeeming an invite. The `local` profile sends no e-mail: the verification token is in the backend
-log (`DEV ONLY - not a delivery`), redeemed with `POST /api/v1/email-verifications`. Until then the
-account cannot sign in.
+log (`DEV ONLY - not a delivery`). To redeem it through this client, open
+`http://localhost:4200/verificar-email?token=<token>` or paste the token into the field of
+`/verificar-email` — that route and parameter are the contract the backend's e-mail link must follow
+(`docs/ai/CONTEXT.md`). Until then the account cannot sign in.
 
 The session cookie as observed: `sinapse_session`, `Path=/api/v1`, `HttpOnly`, `SameSite=Strict`,
 30 days, and **no** `Secure` under the `local` profile

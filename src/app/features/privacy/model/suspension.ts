@@ -34,7 +34,7 @@ export interface OpenErasureRequest {
  *   even after a new grant (the walk-through showed the screen losing its explanation otherwise),
  *   and the screen offers no grant — an action that does nothing.
  * - `unknown`: neither. The suspension at the end of the majority grace period is the one other
- *   cause the backend has (ADR 0004), and it cannot happen in this version (registration refuses
+ *   cause the backend has (backend ADR 0004), and it cannot happen in this version (registration refuses
  *   minors, K-E); the screen states the situation and promises nothing (D4).
  *
  * An open request wins over a missing consent: it is what the person can act on, and its

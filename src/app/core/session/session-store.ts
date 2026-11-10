@@ -207,7 +207,7 @@ export class SessionStore {
   }
 
   /**
-   * The person chose to keep using the account before reaffirming (ADR 0004: the account is not
+   * The person chose to keep using the account before reaffirming (backend ADR 0004: the account is not
    * blocked during the grace period). Held in memory until the session ends; the screen asks again
    * in the next one.
    */

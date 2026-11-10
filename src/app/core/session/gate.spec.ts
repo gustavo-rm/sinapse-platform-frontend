@@ -13,7 +13,7 @@ import {
 /**
  * The chain written out again, independently, as the table of the FE-4 prompt reads, with row 7
  * as FE-5 corrected it (K-H): it holds only on a purpose the student cannot decline without
- * consequence, which ADR 0004 makes `LEARNING_DATA_PROCESSING` alone. The first row whose condition
+ * consequence, which backend ADR 0004 makes `LEARNING_DATA_PROCESSING` alone. The first row whose condition
  * holds wins. The implementation is compared with this over every combination.
  */
 function expectedGate(
@@ -169,7 +169,7 @@ describe('the guard chain', () => {
   });
 });
 
-describe('the reaffirmation asks and does not hold (ADR 0004)', () => {
+describe('the reaffirmation asks and does not hold (backend ADR 0004)', () => {
   const owed = stateOf('ACTIVE', true, [], true, 'UTC');
 
   it('sends a person who owes it to the reaffirmation screen', () => {

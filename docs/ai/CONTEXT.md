@@ -90,7 +90,9 @@ contract review):
    adopt.
 2. Copy the file byte for byte:
    `cp ../sinapse-platform/docs/openapi/openapi.json src/app/core/api/contract/openapi.json`.
-3. `sha256sum src/app/core/api/contract/openapi.json`, and update
+3. `sha256sum src/app/core/api/contract/openapi.json` — of the LF form: a Windows checkout of the
+   backend has CRLF (no `.gitattributes` there), and the drift test hashes the LF-normalised bytes
+   (K-J), so normalise before recording (`sed -i 's/\r$//'`) — and update
    `src/app/core/api/contract/provenance.json`: source commit, last commit touching the file, SHA-256,
    the counted paths, operations and schemas (`scripts/contract.test.mjs` checks the hash and the
    counts), and the date.
@@ -144,12 +146,23 @@ the student layout runs `sessionGuard`; each gate screen runs `gateGuard(gate)` 
 the person the chain sends there. Precedence: 401 → `/entrar` (remembering the route) ·
 `ANONYMIZED` → `/conta-encerrada` (store cleared, no way back) · `SUSPENDED` → `/conta-suspensa` ·
 `PENDING_VERIFICATION` → `/verificar-email` · `PENDING_GUARDIAN_CONSENT` →
-`/consentimento-do-responsavel` · `requiresMajorityReaffirmation` → `/reafirmar-consentimento` ·
-`pendingConsents` not empty → `/consentimentos` · `setupComplete` false → `/configurar` · else the
-requested route. A plan being generated is never a gate. A bootstrap that failed — network,
-unreadable, 5xx, 429 — goes to `/indisponivel`, which shows the error or the rate-limit notice and
-asks again. These paths are this client's screens, not backend routes; the four onboarding ones
-are FE-5 placeholders.
+`/consentimento-do-responsavel` · `requiresMajorityReaffirmation`, unless deferred this session →
+`/reafirmar-consentimento` · `pendingConsents` holding a purpose that cannot be declined freely
+(`holdsOnConsentScreen`: `LEARNING_DATA_PROCESSING` only — FE-5, K-H) → `/consentimentos` ·
+`setupComplete` false → `/configurar` · else the requested route. A plan being generated is never a
+gate. A bootstrap that failed — network, unreadable, 5xx, 429 — goes to `/indisponivel`, which shows
+the error or the rate-limit notice and asks again. These paths are this client's screens, not
+backend routes. `/verificar-email` is a **public** route with no guard (FE-5): row 4 still names it.
+
+**Unreachable rows, kept.** Rows 2, 4 and 5 were measured unreachable in FE-4.1, rows 6 and 7 read
+unreachable in FE-5 (`gate.ts` gives each reason). They stay: each status exists in the contract,
+and `readAccountState` rejects an unknown one. Reachable today: sign-in, suspended, setup.
+
+**After a write, `SessionStore.settle(target)`** re-reads the state and navigates only where the
+chain sends the person from the screen guarded as `target` (`'app'` for a screen of the
+application). No screen navigates by hand after consenting, reaffirming or withdrawing an erasure
+request. The chain's context besides the bootstrap — the reaffirmation deferral — is in memory,
+per session (`SessionStore.chainContext`).
 
 **Ending a session.** Three ways, all in the store, all landing on `/entrar`:
 
@@ -181,6 +194,57 @@ and the route is kept (C8).
 **The account time zone.** After every successful read the store passes `timeZone` to
 `AccountTimeService.setAccountZone`, which validates it by building a formatter inside a
 try/catch; an unusable name keeps UTC and warns once in development. Ending the session empties it.
+
+## The e-mail verification route — the contract the backend needs (F18, FE-5)
+
+The backend's documentation says it does not know this client's address nor its verification
+route. Decided in FE-5, and the link of a verification e-mail must be built exactly so:
+
+```
+<origin of this client>/verificar-email?token=<token>
+```
+
+- **Path** `/verificar-email`, under the public layout, no session needed (`app.routes.ts`).
+- **Query parameter** `token` (`VERIFICATION_TOKEN_PARAM` in
+  `features/auth/pages/verify-email-page.ts`), the value exactly as `POST /api/v1/email-verifications`
+  takes it in `{token}`. The token is base64url (43 characters observed), so it needs no escaping;
+  a percent-encoded value is decoded by the router.
+- On arrival the client replaces the URL with `/verificar-email` (a history replacement, before the
+  request), then posts the token in the body. Without the parameter the screen offers a field to
+  paste it.
+- 204 → the sign-in screen, saying the address was confirmed. 404 → one message for unknown,
+  expired and already used. 429 → the wait.
+
+Until the backend sends e-mail, the token is in the backend console under `local` only, in the
+`DEV ONLY` line of `DevOnlyLoggingAccountNotifier`; paste it, or open the link above.
+
+## The consent model, in one place
+
+From backend ADR 0004, its flows document (sections 1 and 8), the snapshot and — where they are
+silent — its source and FE-5's measurements against `46b5b3c`.
+
+| Purpose | Kind | Asked | Refused / withdrawn | This client |
+|---|---|---|---|---|
+| `LEARNING_DATA_PROCESSING` | essential | at registration, required | withdrawal suspends the account and revokes every session, in the same transaction. **Granting it again does not reactivate** (measured, FE-5): no operation of the contract does (K-L) | the only purpose row 7 holds on; withdrawal warned on the screen and confirmed by typing `SUSPENDER` |
+| `INSTITUTION_SHARING` | conditional | only when an invite is redeemed (F1); registration refuses it (K-I) | a teacher's reads stop at once (checked at each read) | never granted from a consent screen; withdrawal by an ordinary confirmation, no word of suspension |
+| `ACADEMIC_RESEARCH` | optional | at registration, optional | "no effect on the service" | never a gate (K-H); offered at `/conta/consentimentos`, never pre-checked, never recommended; withdrawn with no confirmation |
+
+- **`pendingConsents`** lists the purposes "never acted on" and "requested on [their] own" (backend
+  `AccountDirectoryService`): in practice research declined at registration. A withdrawn one is
+  not listed again. No operation records a refusal.
+- **A grant** sends the `termsVersionId` of the wording on screen; the server refuses with 409
+  `conflict` both a purpose already in force and a wording no longer current — one type for both.
+  The wording in force is the most recently published (`GET /api/v1/terms` lists every version).
+- **The reaffirmation** (`POST /api/v1/consents/reaffirmation`, body `{}` with a session) takes no
+  `termsVersionId`: the server records the wording in force at that moment (K-M). backend ADR 0004: the
+  account is not blocked during the grace period, so the screen can be deferred (decision E2).
+- **Suspension** has two causes this version can produce — the essential consent withdrawn, an
+  erasure request — and the bootstrap cannot tell them apart. The suspended screen reads
+  `GET /api/v1/me/erasure-requests` and `GET /api/v1/consents`. Cancelling an open erasure request
+  reactivates the account, provided the essential consent is in force; otherwise 409 and the
+  cancellation is rolled back.
+- **Never call the reaffirmation route outside its gate.** Measured in FE-5: it reactivates a
+  SUSPENDED adult account whatever the cause — even one with an erasure request still open (K-L).
 
 ## Conventions
 

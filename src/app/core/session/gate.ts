@@ -36,7 +36,8 @@ export type Bootstrap =
  *
  * `reaffirmationDeferred`: the person chose, on the reaffirmation screen, to keep using the account
  * for now. ADR 0004 of the backend: at the transition to majority the account is NOT blocked — the
- * holder is asked, and has a grace period — so row 6 asks and does not hold. FE-5.
+ * holder is asked, and has a grace period — so row 6 asks and does not hold. FE-5, recorded in this
+ * repository's `docs/adr/0004-reafirmacao-pede-e-nao-retem.md`.
  */
 export interface ChainContext {
   readonly reaffirmationDeferred?: boolean;

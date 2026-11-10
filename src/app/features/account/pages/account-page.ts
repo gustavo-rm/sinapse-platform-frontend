@@ -59,7 +59,7 @@ import { SessionStore } from '../../../core/session/session-store';
 export class AccountPage {
   private readonly session = inject(SessionStore);
   protected readonly signingOut = signal(false);
-  /** A reaffirmation the person deferred (ADR 0004: the account is not blocked meanwhile). */
+  /** A reaffirmation the person deferred (backend ADR 0004: the account is not blocked meanwhile). */
   protected readonly reaffirmationOwed = computed(() => {
     const state = this.session.state();
     return state?.accountStatus === 'ACTIVE' && state.requiresMajorityReaffirmation;

@@ -30,9 +30,9 @@ export const REFUSED_MESSAGE =
  *   — so the record is not tied to the text displayed, unlike `POST /consents` (K-M).
  * - Invents no deadline. The grace period is 30 days by configuration and ends in suspension, but
  *   the contract exposes neither the deadline nor the date of birth (K-K): the screen says the
- *   reaffirmation is needed and that the account stays usable meanwhile, which ADR 0004 states.
+ *   reaffirmation is needed and that the account stays usable meanwhile, which backend ADR 0004 states.
  * - And makes that true: "Agora não" defers it for this session (`SessionStore.deferReaffirmation`)
- *   and the chain lets the person into the application. ADR 0004: the account is not blocked.
+ *   and the chain lets the person into the application. backend ADR 0004: the account is not blocked.
  * - The body is `{}`: its one member, `token`, is only for a caller who is not signed in.
  * - After success, `settle('reaffirmation')`: the chain decides where the person goes.
  *

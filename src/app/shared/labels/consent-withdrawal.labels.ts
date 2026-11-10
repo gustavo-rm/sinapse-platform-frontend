@@ -12,7 +12,7 @@ import type { ConsentPurpose } from '../../core/api/contract/enums';
  * - `INSTITUTION_SHARING`: every teacher read checks the consent at the moment of the read, so
  *   access ends at once. Nothing about suspension: there is none.
  * - `ACADEMIC_RESEARCH`: what it does and nothing more. The contract says it "has no effect on the
- *   service"; a warning here would be the pressure ADR 0004 forbids.
+ *   service"; a warning here would be the pressure backend ADR 0004 forbids.
  */
 export const CONSENT_WITHDRAWAL_LABELS: Record<ConsentPurpose, string> = {
   LEARNING_DATA_PROCESSING:

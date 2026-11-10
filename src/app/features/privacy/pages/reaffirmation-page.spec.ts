@@ -75,7 +75,7 @@ describe('the reaffirmation, /reafirmar-consentimento', () => {
     await vi.waitFor(() => expect(root().querySelector('sn-error-state')).not.toBeNull());
   });
 
-  it('does not hold the person: "Agora não" opens the application for this session (ADR 0004)', async () => {
+  it('does not hold the person: "Agora não" opens the application for this session (backend ADR 0004)', async () => {
     server.use(stateServer(OWED).handler);
     const { click, router, harness } = await openApp('/reafirmar-consentimento');
     await click('Agora não');

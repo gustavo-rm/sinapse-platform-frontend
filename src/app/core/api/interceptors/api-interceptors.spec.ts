@@ -7,7 +7,7 @@ import { useMswServer } from '../../../../testing/msw/server';
 import { problemResponse } from '../../../../testing/msw/problems';
 import { networkFailureAt, problemAt, rawAt } from '../../../../testing/msw/scenarios';
 import { appConfig } from '../../../app.config';
-import { SessionExpiry } from '../../session/session-expiry';
+import { SessionStore } from '../../session/session-store';
 import { ApiClient } from '../api-client';
 import {
   type ApiFailure,
@@ -193,7 +193,7 @@ describe('the API layer against MSW', () => {
         'urn:sinapse:problem:unauthenticated',
       );
       server.use(handler);
-      const session = TestBed.inject(SessionExpiry);
+      const session = TestBed.inject(SessionStore);
       const expire = vi.spyOn(session, 'expire');
 
       await failureOf(firstValueFrom(api.get(ApiRoutes.readModel.myState)));
@@ -210,7 +210,7 @@ describe('the API layer against MSW', () => {
         problemAt('get', ApiRoutes.readModel.myState, 'urn:sinapse:problem:unauthenticated'),
         problemAt('get', ApiRoutes.planning.goals, 'urn:sinapse:problem:unauthenticated'),
       );
-      const session = TestBed.inject(SessionExpiry);
+      const session = TestBed.inject(SessionStore);
       const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
 
       await Promise.all([
@@ -229,7 +229,7 @@ describe('the API layer against MSW', () => {
         problemAt('get', ApiRoutes.readModel.myAgenda, 'urn:sinapse:problem:unauthenticated'),
       );
       await failureOf(firstValueFrom(api.get(ApiRoutes.readModel.myAgenda)));
-      expect(TestBed.inject(SessionExpiry).attemptedRoute()).toBe('/agenda');
+      expect(TestBed.inject(SessionStore).attemptedRoute()).toBe('/agenda');
     });
 
     it('does not end the session when signing in is refused', async () => {
@@ -237,7 +237,7 @@ describe('the API layer against MSW', () => {
       server.use(
         problemAt('post', ApiRoutes.identity.sessions, 'urn:sinapse:problem:unauthenticated'),
       );
-      const expire = vi.spyOn(TestBed.inject(SessionExpiry), 'expire');
+      const expire = vi.spyOn(TestBed.inject(SessionStore), 'expire');
       await failureOf(firstValueFrom(api.post(ApiRoutes.identity.sessions, {})));
       expect(expire).not.toHaveBeenCalled();
     });
@@ -245,7 +245,7 @@ describe('the API layer against MSW', () => {
     it('decides by the problem type, not the status: a 401 that is not a problem ends nothing', async () => {
       const api = setUp();
       server.use(rawAt('get', ApiRoutes.readModel.myState, 401, 'nope', 'text/plain'));
-      const expire = vi.spyOn(TestBed.inject(SessionExpiry), 'expire');
+      const expire = vi.spyOn(TestBed.inject(SessionStore), 'expire');
       await failureOf(firstValueFrom(api.get(ApiRoutes.readModel.myState)));
       expect(expire).not.toHaveBeenCalled();
     });
@@ -439,7 +439,7 @@ describe('the API layer against MSW', () => {
           return problemResponse('urn:sinapse:problem:unauthenticated');
         }),
       );
-      vi.spyOn(TestBed.inject(SessionExpiry), 'expire').mockImplementation(() => {
+      vi.spyOn(TestBed.inject(SessionStore), 'expire').mockImplementation(() => {
         events.push('session expiry');
         return true;
       });
@@ -465,7 +465,7 @@ describe('the API layer against MSW', () => {
           });
         }),
       );
-      const expire = vi.spyOn(TestBed.inject(SessionExpiry), 'expire');
+      const expire = vi.spyOn(TestBed.inject(SessionStore), 'expire');
       vi.spyOn(TestBed.inject(RateLimitState), 'record').mockImplementation(() => {
         events.push('rate limit');
       });

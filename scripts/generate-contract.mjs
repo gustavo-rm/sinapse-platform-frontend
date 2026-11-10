@@ -5,7 +5,7 @@
 //   node scripts/generate-contract.mjs --check   exit 1 if the committed schema.d.ts differs
 //
 // The snapshot (src/app/core/api/contract/openapi.json) is a byte copy of the backend's
-// docs/openapi/openapi.json; its provenance is in src/app/core/api/contract/README.md. It is the
+// docs/openapi/openapi.json; its provenance is in src/app/core/api/contract/provenance.json. It is the
 // only source: the contract is never fetched from a live /api-docs here.
 //
 // The generator is openapi-typescript, which emits a declaration file and no runtime code by
@@ -22,7 +22,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const CONTRACT_DIR = resolve(root, 'src/app/core/api/contract');
 export const SNAPSHOT = resolve(CONTRACT_DIR, 'openapi.json');
 export const SCHEMA_DTS = resolve(CONTRACT_DIR, 'schema.d.ts');
-export const PROVENANCE = resolve(CONTRACT_DIR, 'README.md');
+export const PROVENANCE = resolve(CONTRACT_DIR, 'provenance.json');
 const TOOLS_DIR = resolve(root, 'tools/contract');
 const GENERATOR = resolve(TOOLS_DIR, 'node_modules/openapi-typescript/bin/cli.js');
 

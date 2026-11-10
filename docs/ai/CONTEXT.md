@@ -65,7 +65,7 @@ on a developer's checkout. So its OpenAPI snapshot is copied here.
 | File | `src/app/core/api/contract/openapi.json` |
 | Source | `gustavo-rm/sinapse-platform`, `docs/openapi/openapi.json`, at `46b5b3c` (origin/main, 2026-11-09) |
 | SHA-256 | `d709e504097b1bb0d97b7c7c702493cc4784c8fbc0a61d2806982a4290d8afb0` |
-| Provenance record | `src/app/core/api/contract/README.md`, read by `scripts/contract.test.mjs` |
+| Provenance record | `src/app/core/api/contract/provenance.json`, read by `scripts/contract.test.mjs`; the folder's `README.md` cites it |
 | Generated from it | `schema.d.ts` (openapi-typescript 7.13.0, in `tools/contract/`); the MSW handlers and fixtures of `src/testing/msw/`, at test time |
 
 The snapshot is taken by the backend with no profile, in a stable form (keys sorted, `servers`
@@ -83,8 +83,8 @@ contract review):
    adopt.
 2. Copy the file byte for byte:
    `cp ../sinapse-platform/docs/openapi/openapi.json src/app/core/api/contract/openapi.json`.
-3. `sha256sum src/app/core/api/contract/openapi.json`, and update the provenance table of
-   `src/app/core/api/contract/README.md`: source commit, last commit touching the file, SHA-256,
+3. `sha256sum src/app/core/api/contract/openapi.json`, and update
+   `src/app/core/api/contract/provenance.json`: source commit, last commit touching the file, SHA-256,
    the counted paths, operations and schemas (`scripts/contract.test.mjs` checks the hash and the
    counts), and the date.
 4. `npm run contract` to regenerate `schema.d.ts`.

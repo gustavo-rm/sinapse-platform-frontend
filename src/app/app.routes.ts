@@ -65,7 +65,6 @@ export const routes: Routes = [
       {
         path: at('verify-email'),
         title: 'Confirme seu e-mail · SINAPSE',
-        canActivate: [gateGuard('verify-email')],
         loadComponent: () =>
           import('./features/onboarding/pages/onboarding-placeholders').then(
             (m) => m.VerifyEmailPage,

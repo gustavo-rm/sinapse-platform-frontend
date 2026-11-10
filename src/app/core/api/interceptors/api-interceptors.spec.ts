@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { http, HttpResponse } from 'msw';
 import { firstValueFrom } from 'rxjs';
 
+import { fixture } from '../../../../testing/msw/fixtures';
 import { useMswServer } from '../../../../testing/msw/server';
 import { problemResponse } from '../../../../testing/msw/problems';
 import { networkFailureAt, problemAt, rawAt } from '../../../../testing/msw/scenarios';
@@ -25,6 +26,18 @@ import { RateLimitState } from '../rate-limit-state';
 import { NETWORK_RETRY_DELAYS_MS } from './network-retry.interceptor';
 
 const server = useMswServer();
+
+/** A bootstrap body the guard chain lets into the student area. */
+function signedInState() {
+  return {
+    ...fixture('StudentStateView'),
+    accountStatus: 'ACTIVE' as const,
+    setupComplete: true,
+    requiresMajorityReaffirmation: false,
+    pendingConsents: [],
+    timeZone: 'America/Sao_Paulo',
+  };
+}
 
 function setUp(): ApiClient {
   TestBed.configureTestingModule({
@@ -224,7 +237,10 @@ describe('the API layer against MSW', () => {
 
     it('keeps the route the person was on, to return to it', async () => {
       const api = setUp();
+      // The person must be let into /agenda first: an ACTIVE, configured account (FE-4's guards).
+      server.use(http.get(ApiRoutes.readModel.myState, () => HttpResponse.json(signedInState())));
       await TestBed.inject(Router).navigateByUrl('/agenda');
+      expect(TestBed.inject(Router).url).toBe('/agenda');
       server.use(
         problemAt('get', ApiRoutes.readModel.myAgenda, 'urn:sinapse:problem:unauthenticated'),
       );

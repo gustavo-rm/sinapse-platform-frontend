@@ -40,7 +40,12 @@ export type BootstrapOutcome =
  * - `password-changed`: the password was changed, which ends every session of the account.
  * - `sign-out-unconfirmed`: signing out did not reach the server, which may still hold the session.
  */
-export type SignInNotice = 'session-expired' | 'password-changed' | 'sign-out-unconfirmed';
+export const SIGN_IN_NOTICES = [
+  'session-expired',
+  'password-changed',
+  'sign-out-unconfirmed',
+] as const;
+export type SignInNotice = (typeof SIGN_IN_NOTICES)[number];
 
 /**
  * The session, and the only caller of `GET /api/v1/me/state` (`CLAUDE.md`, *Session and time,

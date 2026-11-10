@@ -69,7 +69,8 @@ export class ApiProblemFailure<T extends ProblemType = ProblemType>
  *   is not JSON, an error that is not `application/problem+json` (a proxy's HTML page), or a
  *   problem whose `type` is not in the catalogue. The server may well have acted.
  */
-export type TransportFailureReason = 'network' | 'timeout' | 'unreadable';
+export const TRANSPORT_FAILURE_REASONS = ['network', 'timeout', 'unreadable'] as const;
+export type TransportFailureReason = (typeof TRANSPORT_FAILURE_REASONS)[number];
 
 /**
  * The server did not answer in the contract. A different situation from an `ApiProblemFailure`,

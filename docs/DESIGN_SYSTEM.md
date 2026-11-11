@@ -237,6 +237,7 @@ Alvo WCAG 2.2 AA. A tabela de contraste medido de todos os pares, nos dois temas
 - Um `<h1>` por tela, hierarquia sem salto, `<nav>` e `<main>`.
 - Campo com rótulo associado, dica e erro por `aria-describedby`, `aria-invalid` quando o servidor aponta o campo. `field: "request"` vai para o erro de formulário.
 - Estado nunca por cor sozinha.
+- Link em texto corrido: `primary`, sublinhado — nunca só pela cor. Uma regra única em `sinapse.css` (FE-6); um `<a>` com `.sn-btn` mantém a aparência de botão.
 - Mudança assíncrona anunciada por região viva. O cronômetro anuncia em minutos.
 - Toda visualização tem tabela equivalente alcançável.
 

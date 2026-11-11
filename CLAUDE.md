@@ -23,14 +23,15 @@ the backend's `docs/FLUXO_DE_PLANO_FRONTEND.md`.
 
 ## 2. State
 
-**Session and access (FE-4).** On top of FE-2's foundation (structure, lint boundaries, routing
+**Account entry (FE-6).** On top of FE-2's foundation (structure, lint boundaries, routing
 skeleton and layouts, the label catalogue, the four shared state components and the time service)
 and FE-3's API layer (the vendored contract and its generated types, `ApiRoutes`, `ApiClient`, the
 interceptor chain, the retry policy, MSW with generated fixtures): `SessionStore`, the only caller
 of `GET /api/v1/me/state`; the guard chain that decides where an account may go; the sign-in
-screen; sign-out; the password change with its local clear; and the account time zone. The flows
-the chain routes to — e-mail verification, consents, reaffirmation, setup — are placeholders for
-FE-5, and there is no product screen yet. Change detection is zoneless
+screen; sign-out; the password change with its local clear; and the account time zone (FE-4). The
+consent, reaffirmation and suspended screens and the public e-mail verification (FE-5).
+Registration and the password reset, as public screens under `publicGuard` (FE-6). The initial
+setup is still a placeholder (FE-7), and there is no study screen yet. Change detection is zoneless
 (`docs/adr/0001-deteccao-de-mudancas.md`). Types are generated and the client is hand-written
 (`docs/adr/0002-tipos-gerados-cliente-escrito.md`). The session state is read imperatively and
 exposed as signals (`docs/adr/0003-leitura-imperativa-do-estado-de-sessao.md`). How the session works

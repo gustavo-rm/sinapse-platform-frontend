@@ -1,10 +1,10 @@
 # STATE — sinapse-platform-frontend
 
-Reviewed: 2026-11-10 UTC, FE-5. Backend `sinapse-platform@46b5b3c` (origin/main, the commit in
-`provenance.json`, confirmed again: `docs/openapi/openapi.json` SHA-256 `d709e504…afb0`, 127,161
-bytes) cloned, built with `mvn -DskipTests package` and RUN under the `local` profile against a
-local PostgreSQL 16, with this client in front of it through `ng serve` and its proxy, and walked in
-Chromium (Playwright). Its own test suite was not run here.
+Reviewed: 2026-11-11 UTC, FE-6. Backend `sinapse-platform@46b5b3c` (origin/main, confirmed again
+on 2026-11-11; the commit in `provenance.json`; `docs/openapi/openapi.json` SHA-256 `d709e504…afb0`,
+127,161 bytes, byte-identical to the vendored copy) cloned, built with `mvn -DskipTests package` and
+RUN under the `local` profile against a local PostgreSQL 16, with this client in front of it through
+`ng serve` and its proxy, and walked in Chromium (Playwright). Its own test suite was not run here.
 
 Present only; history is `git log` and the pull request descriptions. Edit only your own row in
 **Work**.
@@ -19,7 +19,7 @@ Present only; history is `git log` and the pull request descriptions. Edit only 
 | FE-4 | Session: the store fed by `GET /api/v1/me/state`, guards, sign-in and sign-out | done | [#3](https://github.com/gustavo-rm/sinapse-platform-frontend/pull/3) | FE-3 | OBSERVED(2026-11-10). Prompt: `docs/prompts/003-session-and-auth.md`. **Before implementing:** (1) `openapi.json` SHA-256 `d709e504…afb0`, unchanged. (2) `StudentStateView` in `schema.d.ts`: all eight members optional — K-A not fixed. (3) the 401 of `POST /api/v1/password-changes` still reads "No usable session, or the current password does not match". (4) `@angular/common` 22.2.4: `provideHttpClient()` provides `FetchBackend` as `HttpBackend` (`_module-chunk.mjs`, `provideHttpClient`); its timeout is a `setTimeout` that aborts with a `TimeoutError`, which FE-3's converter reads as `TransportFailure('timeout')`. (5) `@angular/router` 22.2.4: `CanActivateFn` returns `MaybeAsync<GuardResult>` (`T \| Observable<T> \| Promise<T>`); `Router.navigateByUrl` registers the navigation with `PendingTasksInternal` until it settles, so the zoneless app and `whenStable()` wait for an async guard — and nothing activates before it resolves, proven by `session-guards.spec.ts`. **Built:** `SessionStore` (replaces the `SessionExpiry` stub, same contract), `readAccountState` (D1), `gateOf`/`accessTo` (the chain, pure), `sessionGuard`/`gateGuard`/`unavailableGuard`, routes for eight gate screens plus `/indisponivel` under the public layout, sign-in (`features/auth`), sign-out (store; control in the account area and in the public layout while a session is open), password change at `/conta/senha` with the D2 probe (`features/account`), the five FE-5 placeholders (`features/onboarding/pages/onboarding-placeholders.ts`), `TRANSPORT_FAILURE_LABELS` and `SIGN_IN_NOTICE_LABELS`, `ErrorState` accepting a transport failure. Account zone wired; `AccountTimeService` now warns once per cause. **Hygiene:** CLAUDE.md references by section name (47 numbered references rewritten, including the bad one in *What this repository is*), `scripts/claude-md-refs.test.mjs` (a bare section number planted in CLAUDE.md failed it, seen); `provenance.json` read by `contract.test.mjs` (a changed count failed it, seen); F15 and the live-spec rule in *Definition of done*. **Accessibility:** jsdom specs for one `<h1>`, keyboard path, labels, `aria-invalid`/`aria-describedby`, a live region present before the error; in Chromium (Playwright, production build, 390px), 11 screens × light, system-dark, `data-theme=dark`, `data-theme=light`: 192 text nodes, none under 4.5:1 (3:1 large), lowest 4.83:1 (hovered primary button, dark); field error 6.13:1 light, 7.58:1 dark; every Tab stop drew a 2px solid outline; no horizontal scroll. **Verified:** `npm run lint` clean; `npm test` 668 Vitest passed + 5 skipped (the opt-in live spec) and 41 script tests; `npm run build` OK (initial 332.94 kB); Vitest 668 passed under `TZ=America/Sao_Paulo` and under `TZ=Asia/Tokyo`. Decisions: below, *Settled in FE-4* |
 | FE-4.1 | Run it against the real backend: development proxy, honest feedback when a session cannot be established, bootstrap tolerance for a non-ACTIVE account | done | [#4](https://github.com/gustavo-rm/sinapse-platform-frontend/pull/4) | FE-4 | Prompt: `docs/prompts/004-local-run-and-session-feedback.md`. **OBSERVED(2026-11-10), on screen and on the wire,** backend `46b5b3c` + `ng serve`, Chromium: *proxy* — `@angular/build:dev-server` 22.2.6 declares `proxyConfig` (string) in its `schema.json`; `proxy.conf.json` maps `/api/v1` → `http://localhost:8080`, no rewrite; `GET /api/v1/me/state` through it answered 401 problem+json. *Walk* — cold `/hoje` → `/entrar`, no message; wrong password → "Não foi possível entrar com esse e-mail e essa senha…" (401, no probe); right password → 201, then `/consentimentos` (the account had declined research: K-H); after granting it and declaring availability and a goal → `/hoje`; `/agenda` with no second bootstrap; reload kept the session; wrong current password on `/conta/senha` → 401, one `GET /me/state` 200, "A senha atual não confere." on the field, focus there, `aria-invalid`; "Sair" (public layout and Conta) → 204, `/entrar`; `/hoje` afterwards → 401 → `/entrar`. *Cookie* — `Set-Cookie: sinapse_session=…; Path=/api/v1; Max-Age=2592000; Expires=…; HttpOnly; SameSite=Strict`, **no `Secure`** under `local` (`cookie-secure: false` in `application-local.yml`; `true` in `application.yml`); stored as `{domain: localhost, path: /api/v1, httpOnly: true, secure: false, sameSite: Strict}`; `document.cookie` empty; sent on the next `GET /me/state` (request headers inspected); sign-out answers `Set-Cookie: sinapse_session=; Max-Age=0` and the browser drops it; sessions survive a backend restart. *Not established* — with `cookie-secure=true` forced and the app on `http://192.0.2.2:4201`, Chromium stored 0 cookies: `POST /sessions` 201, `GET /me/state` 401, the screen stayed on `/entrar` saying "Os dados de acesso foram aceitos, mas não foi possível manter a sessão aberta neste navegador…", two requests, no loop. On `http://localhost` Chromium **accepted** the `Secure` cookie. *429* — 11th sign-in in 5 min: 429, `Retry-After: 295`; notice "Muitas tentativas em pouco tempo. Aguarde 5 minutos para tentar outra vez.", submit disabled, no control: the wait is told (C6 kept; the text is fixed at the 429, not a countdown). *Bodies* — see *Observed bootstrap bodies* below. *Live spec* — `SINAPSE_LIVE_API=http://localhost:8080`: 5/5 (ping 200; validation 400 with `errors[]`; failure 500 → internal-error, not retried; rate-limited 429 with `retryAfter`, not retried; anonymous `/me/state` 401 → expiry once). **ASSUMED, not observed:** the bodies of ANONYMIZED, PENDING_VERIFICATION and PENDING_GUARDIAN_CONSENT — no session can exist for them — hence the symmetric relaxation (C7). **Changed:** `proxy.conf.json` + `angular.json`; `SessionStore.establish()` and the `session-not-established` notice (C8); `readAccountState` relaxation and `AccountTimeService.setAccountZone(null, absentByStatus)`; README local-run section, both languages. **Verified:** `npm run lint` clean; `npm test` 684 Vitest passed + 5 skipped and 41 script tests; `npm run build` OK (initial 333.74 kB); 684 passed under `TZ=America/Sao_Paulo` and under `TZ=Asia/Tokyo` |
 | FE-5 | Consent, verification and the suspended account: K-H fixed in the chain, the consent, reaffirmation and suspended screens, `/verificar-email` public, the drift guard immune to CRLF | done | [#5](https://github.com/gustavo-rm/sinapse-platform-frontend/pull/5) | FE-4.1 | Prompt: `docs/prompts/005-consent-and-verification.md`. **Verified first:** backend `main` = `46b5b3c`, snapshot unchanged (hash and size above); backend ADR 0004, sections 1 and 8 of its flows document, `application.yml` (`identity.tokens` 24h/1h/30d, `majority-grace-period-days: 30`, `data-rights.erasure-window: 7d`, session cookie as stated) all as the prompt says; CRLF form 131,588 bytes `c8da37dd…c79b`, reproduced here. **Step 0 (K-H):** the FRONTEND fix — row 7 holds only on `holdsOnConsentScreen` (`LEARNING_DATA_PROCESSING`); research is offered at `/conta/consentimentos` and on the gate, never required. The table test was red first (11 cases, the declined-research body among them) and covers 5 pending lists × every status (280 + named cases). The BACKEND fix — `pendingConsents` not listing an optional purpose, or a recordable refusal — is still open (K-H). **Built:** `features/privacy/` (data `PrivacyApi`; model `consent.ts`, `suspension.ts`; ui `ConsentDisclosure`; pages: consent gate, `/conta/consentimentos`, reaffirmation, suspended, `JsonFileSaver`); `features/auth` `/verificar-email` (public); `shared/ui/confirm-dialog` (typed-word destructive confirmation, focus trap, Esc only when not destructive, focus returned); three consent label catalogues; `SessionStore.settle`, `announce`, `deferReaffirmation`; K-J in `scripts/`. **Measured (walk-through below):** granting the essential consent again does NOT reactivate a suspended account; the reaffirmation route DOES, whatever the cause (K-L). **Accessibility:** jsdom specs for one `<h1>`, labels, `aria-invalid`/`aria-describedby`, live regions present before their message, the dialog's focus trap and return; in Chromium (production of `ng serve`, 390px), 6 screens × light, system-dark, `data-theme=dark`: 306 text nodes, none below 4.5:1 (3:1 large), lowest 4.82:1 (`versão dev-0`, `sn-terms__ver`, dark), the dialog's body 6.56:1 light / 6.99:1 dark; every Tab stop of `/conta/consentimentos` drew a 2px solid outline; no horizontal scroll. The gate and reaffirmation screens were measured with the bootstrap mocked by `page.route` (rendering only): they are unreachable live. **Verified:** `npm run lint` clean; `npm test` 949 Vitest passed + 5 skipped and 44 script tests; `npm run build` OK (initial 339.36 kB); 949 passed under `TZ=America/Sao_Paulo` and under `TZ=Asia/Tokyo`; live spec (`SINAPSE_LIVE_API`) 5/5 at `46b5b3c`. Decisions: below, *Settled in FE-5* |
-| FE-6 | Registration and password reset | open | — | FE-5 | `POST /api/v1/accounts` with `GET /api/v1/terms` (registration offers `LEARNING_DATA_PROCESSING`, required, and `ACADEMIC_RESEARCH`, optional and not pre-checked — never `INSTITUTION_SHARING`, K-I), reusing `ConsentDisclosure`; the 422 `minor-registration-not-supported`; after 201, send to `/verificar-email`. `POST /api/v1/password-resets` and `/password-resets/confirmation` — the reset link needs a client route and parameter decided as F18 was, and recorded in `CONTEXT.md` for the backend |
+| FE-6 | Account entry: registration and password reset | done | PR_PLACEHOLDER | FE-5 | Prompt: `docs/prompts/006-account-entry.md` (the prompt asked for `005-…`, already FE-5's). **Verified first:** backend `main` = `46b5b3c`, snapshot hash and size as above; backend ADR 0004, flows sections 1 and 9, `DESENVOLVIMENTO_LOCAL.md`, `PROXY_REVERSO.md` read; the prompt's facts confirmed in source (`LoggingAccountNotifier`/`DevOnlyLoggingAccountNotifier`; `isInstitutionSharingAbsent`; `requestReset` silent on an unknown address; rate limits in `application.yml` and `application-local.yml`). Step 6 of the prompt (CRLF) was already done by FE-5 as K-J/E9 — reproduced: CRLF 131,588 bytes `c8da37dd`, normalised `d709e504`; `scripts/contract.test.mjs` already has the CRLF test. **Built:** `/criar-conta`, `/esqueci-senha`, `/redefinir-senha` (`features/auth`), `publicGuard` + `accessToPublic` + `SessionStore.peek`, the two links on `/entrar`, the handoff to FE-5's `/verificar-email` (navigation state + `DevTokenNote`), the shared token handling (`takeTokenFromUrl`, now also used by `/verificar-email`), `SubmitBlock` (`shared/forms`), the `password-reset` sign-in notice, `AccountTimeService.suggestedZone`/`knownZones`/`formatInstant(…, zone)`, the link rule in `sinapse.css`; `ConsentDisclosure` and the wording model moved to `shared/ui/consent-disclosure/` (R3). **Walked live** (below, *FE-6 walk-through*): every step of the prompt's observation done through the interface, none by curl. **Accessibility:** jsdom specs for one `<h1>`, labels, keyboard path, `aria-invalid`/`aria-describedby`, live regions present before their message (`account-entry.a11y.spec.ts`); in Chromium (`ng serve`, 390px), 14 screen states × light, system-dark, `data-theme=dark`: 795 text nodes, none below 4.5:1 (3:1 large), lowest 4.79:1 (`sn-field__hint` "De 12 a 256 caracteres.", light), no horizontal scroll; the Tab path of `/criar-conta`, `/verificar-email`, `/esqueci-senha`, `/redefinir-senha`, `/entrar` in light and dark: every stop drew a 2px solid outline. **Verified:** `npm run lint` clean; `npm test` 1082 Vitest passed + 5 skipped and 44 script tests; `npm run build` OK (initial 343.55 kB); 1082 passed under `TZ=America/Sao_Paulo` and under `TZ=Asia/Tokyo`; live spec (`SINAPSE_LIVE_API`) 5/5. Negative controls seen failing: `replaceUrl: false` in `publicGuard`; research pre-checked (4 specs red); the reset confirmation echoing the address (2 red); a reset token left in the URL or a field (leak spec). Decisions: below, *Settled in FE-6* |
 | FE-7 | Initial setup: availability and goals | open | — | FE-5 | Replace the `/configurar` placeholder: `POST /api/v1/availability` (accept `HH:mm:ss` back, F19) and `POST /api/v1/goals` against `GET /api/v1/subjects`; then `settle('setup')`. Locally the catalogue is empty unless seeded (FE-5 inserted one row into `subject` by SQL to walk) |
 
 ## Open decisions
@@ -71,6 +71,23 @@ Recorded here, not as ADRs, except C1.
 
 D4 of FE-4 is superseded by E4: the essential purposes are settled (K-G closed), so the suspended
 screen names the cause it can read.
+
+## Settled in FE-6
+
+Chosen in FE-6 where the prompt left it open (G1–G10), or settled by it and implemented as stated.
+
+| ID | Decision | Where |
+|---|---|---|
+| G1 | The public screens that create and recover an account run `publicGuard`, the mirror of a gate's guard: no session → through; a session → where the chain says (`accessToPublic`), by a redirect that replaces the history entry. The state is read through `SessionStore.peek`, whose 401 is a visitor, not an expiry. A failed read lets the person through: these screens depend on no session. `/entrar` keeps FE-4's behaviour, unguarded | `core/session/gate.ts`, `session-guards.ts`, `session-store.ts` |
+| G2 | Registration's 409 (`conflict`: "address already registered, or the accepted wording is no longer the one in force", K-O): read `GET /api/v1/terms` again and compare with the ids submitted. A submitted id no longer in force → the wording moved: show the new text, uncheck what was accepted against the old one, say so; nothing else changes. All still in force → the address: say it cannot be used, offer `/entrar` and `/esqueci-senha`, assert no account. The re-read failing → the error state, no guess. A new wording of a purpose that was NOT accepted (research declined) does not count | `features/auth/model/registration-outcome.ts` (`conflictCauseOf`), `registration-page.ts` |
+| G3 | One token handling for both token screens (`takeTokenFromUrl`): the URL replaced before anything is done with the token. The reset token cannot be consumed on arrival (a new password is needed), so it is held in a private field — never a form control, the page, the title, a log or storage — and the token field is hidden while one is held; a refused one is dropped and the field appears | `features/auth/pages/single-use-token.ts`, `password-reset-page.ts`, `verify-email-page.ts` |
+| G4 | The reset request has ONE confirmation for every 204, worded to be true whether or not the address has an account ("Se o endereço informado for de uma conta…"), interpolating nothing, not even the address; the address is cleared after the request. Asserted byte for byte for a known and an unknown address | `password-reset-request-page.ts` and its spec |
+| G5 | The time zone is a `<select>` of the runtime's IANA zones with the browser's zone preselected as a suggestion ("Sugerido a partir deste navegador; altere…"), required; with no suggestion, an empty choice. The terms' publication dates are shown in the zone being declared (there is no account zone yet). The date of birth is sent as typed and checked as text only (`yyyy-MM-dd`, a calendar date); its age is the server's (the threshold is configuration, K-Q) | `AccountTimeService.suggestedZone`/`knownZones`, `registration-page.ts`, `isLocalDate` |
+| G6 | After a 201 the person goes to FE-5's `/verificar-email` with a navigation-state flag (`sinapseRegistered`), which makes that screen say "Conta criada." and what is missing; nothing of the account travels. A development build (`isDevMode()`) also says the token is in the server console, in a `DEV ONLY` line (`DevTokenNote`, on both token screens); a production build says nothing about it | `verify-email-page.ts`, `features/auth/ui/dev-token-note.ts` |
+| G7 | After the 204 of the reset confirmation, `SessionStore.end('password-reset')` whatever the store holds: the guard keeps a signed-in person away, but another tab may have signed in since, and the 204 ended that session too | `password-reset-page.ts` |
+| G8 | The 422 names no age — the threshold is configuration, not contract (K-Q) — blames nobody, says the guardian path does not exist in this version and that nothing was kept (`RegistrationService` writes nothing on refusal), and asks for no guardian's address | `registration-page.ts` (`UNDER_AGE_MESSAGE`) |
+| G9 | Links are `primary` and underlined, in one rule of `sinapse.css`: FE-6 is the first to put links in running text, and the browser's default blue fails contrast in the dark theme | `src/styles/sinapse.css` |
+| G10 | `ConsentDisclosure` and the wording model (`Wording`, `currentWordings`, `isDevelopmentPlaceholder`) rose from `features/privacy` to `shared/ui/consent-disclosure/`: registration (`features/auth`) shows the same texts with the same component, and R3 forbids a feature importing another. The component gained `zone` (G5) and `error` (the essential purpose left unchecked) | `shared/ui/consent-disclosure/` |
 
 ## Gate rows unreachable today
 
@@ -148,6 +165,70 @@ by `POST /availability` and `/goals` (FE-7 builds those screens), against one su
 Not walked live: the consent gate and the reaffirmation (unreachable, *Gate rows unreachable
 today*); their behaviour is covered by component tests with MSW.
 
+## FE-6 walk-through, against the backend
+
+`46b5b3c` under `local` (PostgreSQL 16, empty database), `ng serve` and its proxy, Chromium at 390px,
+2026-11-11. Every step through the interface; the only out-of-band act is reading the server console,
+which is the point. Tokens elided here.
+
+1. **Register on `/criar-conta`, having read the terms on screen.** `GET /me/state` 401 (no redirect,
+   no notice), `GET /terms` 200. The screen: the four fields, "De 12 a 256 caracteres.", the zone
+   preselected `America/Sao_Paulo` with "Sugerido a partir deste navegador…", then two cards — the
+   essential purpose ("Essencial") and research ("Opcional") — each with "versão dev-0 · publicada
+   em 10 de novembro de 2026", the development marker, the full body, then "Li e concordo com esta
+   finalidade"; 0 of 2 checkboxes checked on arrival; no `INSTITUTION_SHARING`. Research declined:
+   `POST /accounts` 201 with `acceptedTerms` = the essential wording's id only, `dateOfBirth`
+   `1996-01-01` as typed → `/verificar-email`: "Conta criada. Falta confirmar o endereço de e-mail: a
+   conta só fica ativa depois disso, e até lá não é possível entrar…" and the development note.
+2. **The `DEV ONLY` line.** `DEV ONLY - not a delivery. Token for account dba4f5e6-…, purpose
+   EMAIL_VERIFICATION, valid until 2026-11-12T00:38:16Z. Redeem with: POST
+   /api/v1/email-verifications {"token":"…"}` — no e-mail address in it.
+3. **Verify, both ways.** Pasted: `POST /email-verifications` 204 → `/entrar` "Seu e-mail foi
+   confirmado. Entre com seu e-mail e sua senha para continuar." By URL, for a second account
+   registered from a browser in `Asia/Tokyo` (zone preselected `Asia/Tokyo`, research accepted:
+   both ids sent): 204 → `/entrar`, the token in the final URL: no; after Back: `/verificar-email`,
+   no token.
+4. **Sign in.** `POST /sessions` 201, `GET /me/state` 200 → `/configurar` (not set up; research
+   declined does not gate, K-H). Signed in, `/criar-conta`, `/esqueci-senha` and
+   `/redefinir-senha?token=…` each → `/configurar`; Back after the token redirect: `/configurar`,
+   the token gone from history.
+5. **Reset, with a session open in another browser.** `/esqueci-senha` for the account: 204 →
+   "Pedido recebido · Se o endereço informado for de uma conta, ele recebe uma mensagem com um código
+   para escolher uma nova senha…", then the note and "Já tenho o código". The `DEV ONLY` line:
+   `purpose PASSWORD_RESET, valid until 2026-11-11T01:38:38Z. Redeem with: POST
+   /api/v1/password-resets/confirmation {"token":"…","newPassword":"<new password>"}` (1 hour). The
+   same request for an address with no account: 204, the rendered screen **identical** (text
+   compared), and no `DEV ONLY` line — the server issued nothing. The link
+   `/redefinir-senha?token=…` → URL cleaned at once, "O código do link foi recebido. Agora escolha a
+   nova senha.", only the password field; `POST /password-resets/confirmation` 204 → `/entrar` "Sua
+   senha foi redefinida, e todas as sessões desta conta foram encerradas. Entre com a nova senha."
+   **Every session ended:** the other browser's next load, `GET /me/state` 401 → `/entrar`; the old
+   password: `POST /sessions` 401, "Não foi possível entrar…"; the new one: 201 → `/configurar`. The
+   same link again: 404 → "Este código de redefinição não foi aceito. Ele pode ter expirado, já ter
+   sido usado ou estar incompleto. Você pode pedir um novo.", the token field shown empty, "Pedir um
+   novo código". **First end-to-end run of this path: it works as documented.**
+6. **Below the consent age.** Date of birth `2012-06-15`: `POST /accounts` 422 → on the same
+   screen, "Não é possível criar a conta nesta versão · Por enquanto, só é possível criar uma conta
+   a partir da idade mínima para consentir em nome próprio. O cadastro com o consentimento de um
+   responsável ainda não existe, e por isso não há outro caminho por aqui agora. Nenhum dado deste
+   formulário foi guardado." No `DEV ONLY` line (nothing written, as `RegistrationService` says).
+7. **409, both meanings (G2).** The first account's address again: 409, `GET /terms` 200 (ids
+   unchanged) → the e-mail field marked "Este endereço não pode ser usado para criar uma conta." and
+   "Este endereço de e-mail não pode ser usado para criar uma conta. Se você já tem uma conta com ele,
+   entre ou redefina a senha." with "Entrar" and "Redefinir a senha"; the acceptance kept. Then, with
+   the form filled for a new address, the backend restarted with
+   `--sinapse.identity.terms[0]…version=dev-1` (one wording published), and submitted: 409, `GET
+   /terms` 200 → "O texto de "Processamento de dados de aprendizagem" mudou desde que esta página foi
+   aberta. Leia a versão em vigor abaixo e marque sua escolha de novo.", the card now "versão dev-1"
+   with the new body, its box unchecked; checked again → 201 with the `dev-1` id.
+8. **429, on the real limits.** Registration (after the restart, which empties the in-memory
+   buckets): the 6th `POST /accounts` in the hour → 429 `Retry-After: 2819` → "Muitas tentativas em
+   pouco tempo. Aguarde 47 minutos para tentar outra vez.", submit disabled, no retry control. Reset
+   request: 5 × 204, the 6th 429 `Retry-After: 3593` → "Aguarde 60 minutos…" (F21), submit disabled.
+
+Not walked live: the 429 of the reset confirmation and of the verification (10 per 5 minutes each;
+covered by component tests).
+
 ## Known issues and limitations
 
 | ID | Description | Status | Evidence | Workaround | Resolved by |
@@ -186,6 +267,11 @@ today*); their behaviour is covered by component tests with MSW.
 | K-N | One 409 `conflict` covers two cases on `POST /consents` (already in force / wording superseded) and two on the erasure cancellation (request closed / essential consent not in force, which rolls the cancellation back). The client cannot tell which | READ@46b5b3c (snapshot, `ConsentService`, `ErasureRequestService`) | — | E5; the suspended screen names both possibilities | the backend: distinct problem types |
 | F20 | `POST /email-verifications` 204 does not mean ACTIVE: for a holder below the consent age the account goes to PENDING_GUARDIAN_CONSENT with the same 204 (`ConsentService.activateAfterEmailVerification`). Unreachable in v1 | READ@46b5b3c | — | the notice says the address was confirmed, not that the account is active | — |
 | F19 | Availability echoes `startTime`/`endTime` as `HH:mm:ss` (`"19:00:00"`), while `docs/DESIGN_SYSTEM.md` §11 says a local time travels as `HH:mm` and the snapshot's example is `"19:00"` | OBSERVED(2026-11-10) | `POST /api/v1/availability` response | FE-5's availability screen must accept both | — |
+| K-O | One 409 `conflict` on `POST /api/v1/accounts` covers "address already registered" and "the accepted wording is no longer the one in force" (`EmailAlreadyRegisteredException`, `UnknownTermsVersionException`, both `CONFLICT`). The client can tell them apart only by reading the terms again (G2), which is a second request and a race | READ@46b5b3c (snapshot, source); OBSERVED both (FE-6 walk 7) | — | G2 | the backend: distinct problem types |
+| K-P | `POST /api/v1/accounts` declares no 429 although it is rate-limited (5 per hour per address, `identity-registration`); the other four limited routes of identity declare it | READ@46b5b3c (snapshot); OBSERVED 429 `Retry-After: 2819` (FE-6 walk 8) | — | handled like every 429 | the backend: declare it |
+| K-Q | The consent age (`sinapse.identity.consent-age-threshold: 18`) is configuration, not contract, so the 422 cannot say which age it is; the snapshot says only "below the configured consent age" | READ@46b5b3c | — | G8: the message names no age | the backend, if the screen should state it |
+| K-R | **There is no e-mail transport in any profile.** `LoggingAccountNotifier`, the only production `AccountNotifier`, discards the message; only `local` writes the token to the console. So, deployed today, a registration can never be activated and a reset never completed by anyone: both token screens work only for a developer reading the console | READ@46b5b3c (`identity/internal/notification/`, `DESENVOLVIMENTO_LOCAL.md`) | — | the screens are ready for the links of CONTEXT.md, *The two token routes* | the backend: a transport, with links built as `CONTEXT.md` says |
+| F21 | `describeWait` (FE-2) writes a `Retry-After` of 3541–3599 s as "60 minutos" instead of "1 hora" (seen: 3593 → "Aguarde 60 minutos…"). True and harmless; not changed here | OBSERVED(2026-11-11) | FE-6 walk 8 | — | a one-line change in `rate-limit-notice.ts` when someone touches it |
 
 ## Unknowns
 
@@ -194,8 +280,11 @@ today*); their behaviour is covered by component tests with MSW.
 - The reverse-proxy configuration of any deployed environment.
 - Whether a deployment's reverse proxy forwards `/api/v1` exactly as `proxy.conf.json` does here
   (same origin, no path rewrite). FE-4.1 proved only the development proxy.
-- Whether a deployed e-mail client keeps `?token=` intact in the link of E3 (a field to paste is the
-  fallback).
+- Whether a deployed e-mail client keeps `?token=` intact in the links of E3 and FE-6's reset (a
+  field to paste is the fallback on both screens).
+- Whether completing a password reset for an account still `PENDING_VERIFICATION` should verify the
+  address: `PasswordService.requestReset` issues a token to it (it filters only ANONYMIZED), and the
+  reset does not change its status. READ, not walked.
 - The three FE-4 unknowns about `/me/state` are resolved by observation: the identifiers are
   omitted when there is none; "empty" readiness is `false`; an ANONYMIZED account holds no session
   (*Observed bootstrap bodies*).

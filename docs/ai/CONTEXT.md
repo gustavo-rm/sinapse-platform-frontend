@@ -154,6 +154,16 @@ gate. A bootstrap that failed — network, unreadable, 5xx, 429 — goes to `/in
 the error or the rate-limit notice and asks again. These paths are this client's screens, not
 backend routes. `/verificar-email` is a **public** route with no guard (FE-5): row 4 still names it.
 
+**The public screens that create and recover an account** (FE-6) — `/criar-conta`,
+`/esqueci-senha`, `/redefinir-senha` — run `publicGuard`, the mirror of a gate screen's guard
+(`accessToPublic` in `gate.ts`): a person with no session is let through; one with a session is sent
+on to where the chain says they belong (`PENDING_VERIFICATION` → `/verificar-email`, row 4), by a
+redirect that REPLACES the history entry, so a reset link's `?token=` does not stay in the back
+stack. It reads the state through `SessionStore.peek()`: the same single read, but its 401 is a
+visitor, not an expiry — no redirect to sign in, no notice, no remembered route. A failed read lets
+the person through: these screens depend on no session. `/entrar` and `/verificar-email` have no
+guard.
+
 **Unreachable rows, kept.** Rows 2, 4 and 5 were measured unreachable in FE-4.1, rows 6 and 7 read
 unreachable in FE-5 (`gate.ts` gives each reason). They stay: each status exists in the contract,
 and `readAccountState` rejects an unknown one. Reachable today: sign-in, suspended, setup.
@@ -176,6 +186,9 @@ per session (`SessionStore.chainContext`).
   and go, and say the server did not confirm, so the session may still work in this browser.
 - `end('password-changed')` — after the 204 of `POST /api/v1/password-changes`, which ends every
   session of the account; nobody waits for a 401.
+- `end('password-reset')` — after the 204 of `POST /api/v1/password-resets/confirmation` (FE-6),
+  which ends every session of the account in the same transaction; whatever this browser held is
+  cleared at once.
 
 **The password-change probe** (decision D2, `features/account/data/password-change.ts`). That
 route's 401 means either "no session" or "wrong current password". On a 401 the store re-reads the
@@ -195,14 +208,39 @@ and the route is kept (C8).
 `AccountTimeService.setAccountZone`, which validates it by building a formatter inside a
 try/catch; an unusable name keeps UTC and warns once in development. Ending the session empties it.
 
-## The e-mail verification route — the contract the backend needs (F18, FE-5)
+## The two token routes — the contract the backend needs (F18, FE-5, FE-6)
 
-The backend's documentation says it does not know this client's address nor its verification
-route. Decided in FE-5, and the link of a verification e-mail must be built exactly so:
+The backend's documentation says it does not know this client's address nor its routes. Its e-mail
+links must be built exactly so — one path per purpose, the same query parameter, `token`
+(`TOKEN_PARAM` in `features/auth/pages/single-use-token.ts`), the value exactly as the consuming
+route takes it in its body:
 
-```
-<origin of this client>/verificar-email?token=<token>
-```
+| Purpose (`AccountTokenPurpose`) | Link | Consumed by |
+|---|---|---|
+| `EMAIL_VERIFICATION` | `<origin of this client>/verificar-email?token=<token>` | `POST /api/v1/email-verifications` `{token}` |
+| `PASSWORD_RESET` | `<origin of this client>/redefinir-senha?token=<token>` | `POST /api/v1/password-resets/confirmation` `{token, newPassword}` |
+
+Both screens take the token out of the URL the one way (`takeTokenFromUrl`): a history replacement
+to the bare path, BEFORE anything is done with it. Both offer a field to paste a token, which is
+today the only path that works (no e-mail transport; the token is in the backend console under
+`local` only, in the `DEV ONLY` line). Both conflate 404 — unknown, expired or already used — into
+one message. `MAJORITY_REAFFIRMATION` has no link: the reaffirmation is a gate screen of a signed-in
+holder, `POST /api/v1/consents/reaffirmation` with `{}`, and takes no token (K-M).
+
+### `/redefinir-senha` (FE-6)
+
+- **Path** `/redefinir-senha`, under the public layout, guarded by `publicGuard` (a person with a
+  session is sent into the application; the redirect replaces the history entry).
+- With `?token=`: the token is held in memory (never in a form control) and the screen asks only for
+  the new password — 12 to 256 characters, stated before typing. Without one, or after a held token
+  was refused: a field to paste it.
+- 204 → every session of the account ended; this browser's store is cleared (`end('password-reset')`)
+  and the sign-in screen says so. 404 → one message and a link to `/esqueci-senha`. 429 → the wait.
+- The request screen, `/esqueci-senha`, shows ONE confirmation for every 204, worded to hold
+  whether or not the address has an account, interpolating nothing (the server answers the same
+  way on purpose; a spec asserts the two renders are byte-identical).
+
+### `/verificar-email` (FE-5)
 
 - **Path** `/verificar-email`, under the public layout, no session needed (`app.routes.ts`).
 - **Query parameter** `token` (`VERIFICATION_TOKEN_PARAM` in
@@ -214,6 +252,9 @@ route. Decided in FE-5, and the link of a verification e-mail must be built exac
   paste it.
 - 204 → the sign-in screen, saying the address was confirmed. 404 → one message for unknown,
   expired and already used. 429 → the wait.
+- Reached from `/criar-conta` after a 201 (FE-6), it also says the account was created and what has
+  to happen next — read from the navigation state (`REGISTERED_STATE_KEY`), a flag and nothing of
+  the account. A development build says where the token is (`DevTokenNote`).
 
 Until the backend sends e-mail, the token is in the backend console under `local` only, in the
 `DEV ONLY` line of `DevOnlyLoggingAccountNotifier`; paste it, or open the link above.
@@ -227,11 +268,16 @@ silent — its source and FE-5's measurements against `46b5b3c`.
 |---|---|---|---|---|
 | `LEARNING_DATA_PROCESSING` | essential | at registration, required | withdrawal suspends the account and revokes every session, in the same transaction. **Granting it again does not reactivate** (measured, FE-5): no operation of the contract does (K-L) | the only purpose row 7 holds on; withdrawal warned on the screen and confirmed by typing `SUSPENDER` |
 | `INSTITUTION_SHARING` | conditional | only when an invite is redeemed (F1); registration refuses it (K-I) | a teacher's reads stop at once (checked at each read) | never granted from a consent screen; withdrawal by an ordinary confirmation, no word of suspension |
-| `ACADEMIC_RESEARCH` | optional | at registration, optional | "no effect on the service" | never a gate (K-H); offered at `/conta/consentimentos`, never pre-checked, never recommended; withdrawn with no confirmation |
+| `ACADEMIC_RESEARCH` | optional | at registration, optional | "no effect on the service" | never a gate (K-H); offered at `/criar-conta` and `/conta/consentimentos` on the same terms as the essential one — never pre-checked, never recommended, no warning, no extra step; withdrawn with no confirmation |
 
 - **`pendingConsents`** lists the purposes "never acted on" and "requested on [their] own" (backend
   `AccountDirectoryService`): in practice research declined at registration. A withdrawn one is
   not listed again. No operation records a refusal.
+- **Registration** (FE-6, `/criar-conta`) offers exactly `LEARNING_DATA_PROCESSING` (required) and
+  `ACADEMIC_RESEARCH` (optional), each with its full text before its control, and sends the
+  `termsVersionId` of the wording on screen. Its 409 `conflict` means "address already registered,
+  or the accepted wording is no longer the one in force" (K-O): the client reads `GET /api/v1/terms`
+  again and compares (decision G2 in `STATE.md`).
 - **A grant** sends the `termsVersionId` of the wording on screen; the server refuses with 409
   `conflict` both a purpose already in force and a wording no longer current — one type for both.
   The wording in force is the most recently published (`GET /api/v1/terms` lists every version).

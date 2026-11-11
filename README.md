@@ -19,15 +19,16 @@ premissa de arquitetura, não detalhe de implantação: a sessão viaja em um *c
 
 ### Estado
 
-**Sessão e acesso (FE-4).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
-*lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo) e a camada
+**Entrada na conta (FE-6).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
+*lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo), a camada
 de API de FE-3 (contrato OpenAPI copiado com tipos gerados, `ApiRoutes`, `ApiClient`,
-interceptadores, política de nova tentativa, MSW), existem o *store* de sessão alimentado por
-`GET /api/v1/me/state`, a cadeia de *guards* que decide para onde cada conta pode ir, a tela de
-entrar, a saída, a troca de senha e o fuso da conta. As telas para onde a cadeia encaminha
-(confirmação de e-mail, consentimentos, configuração) são marcadores de lugar de FE-5; ainda não há
-tela de produto. Como a sessão funciona está em [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); o
-detalhe, em [`docs/ai/STATE.md`](docs/ai/STATE.md).
+interceptadores, política de nova tentativa, MSW) e a sessão de FE-4 (o *store* alimentado por
+`GET /api/v1/me/state`, a cadeia de *guards*, entrar, sair, trocar a senha, o fuso da conta),
+existem os consentimentos, a reafirmação, a conta suspensa e a confirmação de e-mail de FE-5, e,
+de FE-6, o cadastro (`/criar-conta`) e a redefinição de senha (`/esqueci-senha`,
+`/redefinir-senha`). A configuração inicial (`/configurar`) ainda é um marcador de lugar (FE-7).
+Como a sessão funciona está em [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); o detalhe, em
+[`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     a referência obrigatória de interface
@@ -108,14 +109,17 @@ Feito e observado em 10/11/2026 contra `sinapse-platform@46b5b3c` (o *commit* de
    `http://localhost:8080` sem reescrever o caminho. O backend não publica CORS e o cliente só usa
    caminhos relativos: sem esse encaminhamento, toda rota protegida cai em `/indisponivel`.
 
-Para ter uma conta: `POST /api/v1/accounts` (o texto dos termos vem de `GET /api/v1/terms`; o
-perfil `local` publica três textos marcados `dev-0`, que **não** são termos de consentimento). Não
-inclua `INSTITUTION_SHARING` no cadastro — o servidor recusa; esse consentimento é dado ao aceitar
-um convite. O perfil `local` não envia e-mail: o *token* de verificação aparece no log do backend
-(`DEV ONLY - not a delivery`). Para consumi-lo por este cliente, abra
-`http://localhost:4200/verificar-email?token=<token>` ou cole o *token* no campo de
-`/verificar-email` — essa rota e esse parâmetro são o contrato que o link do e-mail do backend deve
-seguir (`docs/ai/CONTEXT.md`). Antes disso a conta não consegue entrar.
+Para ter uma conta, use a própria interface: `http://localhost:4200/criar-conta` mostra o texto
+completo de cada termo (o perfil `local` publica três textos marcados `dev-0`, que **não** são
+termos de consentimento, e a tela diz isso). O perfil `local` não envia e-mail: o *token* de
+verificação aparece no console do backend, numa linha `DEV ONLY - not a delivery`. Depois do
+cadastro a tela leva a `/verificar-email`; cole o *token* no campo ou abra
+`http://localhost:4200/verificar-email?token=<token>`. A redefinição de senha segue o mesmo
+caminho: `/esqueci-senha`, o *token* no console, e `/redefinir-senha?token=<token>` ou o campo da
+tela. Essas duas rotas e o parâmetro `token` são o contrato que os links dos e-mails do backend
+devem seguir (`docs/ai/CONTEXT.md`). O limite de 5 cadastros e 5 pedidos de redefinição por hora
+vale para **todas** as chamadas anônimas que passam pelo *proxy* de desenvolvimento, que chegam ao
+backend do mesmo endereço; reiniciar o backend zera os contadores, que ficam em memória.
 
 O *cookie* de sessão observado: `sinapse_session`, `Path=/api/v1`, `HttpOnly`,
 `SameSite=Strict`, 30 dias, e **sem** `Secure` no perfil `local`
@@ -154,14 +158,15 @@ configuration.
 
 ### State
 
-**Session and access (FE-4).** On top of FE-2's foundation (structure, lint-checked boundaries,
-routes and layouts, label catalogue, state components, time service) and FE-3's API layer (the
-vendored OpenAPI contract with generated types, `ApiRoutes`, `ApiClient`, interceptors, retry
-policy, MSW), there are the session store fed by `GET /api/v1/me/state`, the guard chain that
-decides where each account may go, the sign-in screen, sign-out, the password change and the
-account time zone. The screens the chain routes to (e-mail verification, consents, setup) are FE-5
-placeholders; there is no product screen yet. How the session works is in
-[`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); details in [`docs/ai/STATE.md`](docs/ai/STATE.md).
+**Account entry (FE-6).** On top of FE-2's foundation (structure, lint-checked boundaries, routes
+and layouts, label catalogue, state components, time service), FE-3's API layer (the vendored
+OpenAPI contract with generated types, `ApiRoutes`, `ApiClient`, interceptors, retry policy, MSW)
+and FE-4's session (the store fed by `GET /api/v1/me/state`, the guard chain, sign-in, sign-out,
+the password change, the account time zone), there are FE-5's consent, reaffirmation, suspended
+and e-mail verification screens and, from FE-6, registration (`/criar-conta`) and the password
+reset (`/esqueci-senha`, `/redefinir-senha`). The initial setup (`/configurar`) is still a
+placeholder (FE-7). How the session works is in [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md);
+details in [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
 docs/DESIGN_SYSTEM.md     the binding interface reference
@@ -243,14 +248,17 @@ Done and observed on 2026-11-10 against `sinapse-platform@46b5b3c` (the commit i
    `http://localhost:8080` without rewriting the path. The backend publishes no CORS and the client
    uses relative paths only: without the forwarding, every guarded route lands on `/indisponivel`.
 
-To get an account: `POST /api/v1/accounts` (the terms come from `GET /api/v1/terms`; the `local`
-profile publishes three wordings marked `dev-0`, which are **not** consent terms). Leave
-`INSTITUTION_SHARING` out of the registration — the server refuses it; that consent is given when
-redeeming an invite. The `local` profile sends no e-mail: the verification token is in the backend
-log (`DEV ONLY - not a delivery`). To redeem it through this client, open
-`http://localhost:4200/verificar-email?token=<token>` or paste the token into the field of
-`/verificar-email` — that route and parameter are the contract the backend's e-mail link must follow
-(`docs/ai/CONTEXT.md`). Until then the account cannot sign in.
+To get an account, use the interface itself: `http://localhost:4200/criar-conta` shows the full
+text of each term (the `local` profile publishes three wordings marked `dev-0`, which are **not**
+consent terms, and the screen says so). The `local` profile sends no e-mail: the verification token
+is in the backend console, in a `DEV ONLY - not a delivery` line. After registering, the screen
+takes you to `/verificar-email`; paste the token into the field or open
+`http://localhost:4200/verificar-email?token=<token>`. The password reset works the same way:
+`/esqueci-senha`, the token in the console, and `/redefinir-senha?token=<token>` or the screen's
+field. Those two routes and the `token` parameter are the contract the backend's e-mail links must
+follow (`docs/ai/CONTEXT.md`). The limit of 5 registrations and 5 reset requests an hour applies to
+**every** anonymous call through the development proxy, which all reach the backend from the same
+address; restarting the backend resets the counters, which are in memory.
 
 The session cookie as observed: `sinapse_session`, `Path=/api/v1`, `HttpOnly`, `SameSite=Strict`,
 30 days, and **no** `Secure` under the `local` profile

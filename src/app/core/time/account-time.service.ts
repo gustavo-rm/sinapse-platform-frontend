@@ -158,6 +158,18 @@ export class AccountTimeService {
     return new Date(this.wallToUtc(wall, this.effectiveZone())).toISOString();
   }
 
+  /**
+   * Formats a LOCAL date (`yyyy-MM-dd`: `effectiveFrom`, `targetDate`…) for reading. A local date
+   * is a day on the calendar, not an instant, so no zone moves it: it is formatted as the day it
+   * names, whatever the account's or the browser's zone. Throws a `RangeError` on anything that is
+   * not a calendar date.
+   */
+  formatLocalDate(localDate: string, format: 'date' | 'longDate' = 'date'): string {
+    const [year, month, day] = parseLocalDate(localDate);
+    const noon = Date.UTC(year, month - 1, day, 12);
+    return this.formatter(FALLBACK_ZONE, FORMAT_OPTIONS[format]).format(new Date(noon));
+  }
+
   /** Today's date in the account's zone, as `yyyy-MM-dd`. */
   today(): string {
     return this.localDateAt(Date.now(), this.effectiveZone());

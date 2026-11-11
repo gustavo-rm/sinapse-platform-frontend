@@ -160,6 +160,21 @@ describe('AccountTimeService', () => {
     });
   });
 
+  describe('formatLocalDate', () => {
+    it('formats the day a local date names, in every account zone, east or west', () => {
+      for (const zone of ['Pacific/Kiritimati', 'Pacific/Pago_Pago', 'America/Sao_Paulo', 'UTC']) {
+        time.setAccountZone(zone);
+        expect(time.formatLocalDate('2026-11-01')).toBe('01/11/2026');
+        expect(time.formatLocalDate('2027-06-30', 'longDate')).toBe('30 de junho de 2027');
+      }
+    });
+
+    it('refuses what is not a calendar date', () => {
+      expect(() => time.formatLocalDate('2026-02-30')).toThrow(RangeError);
+      expect(() => time.formatLocalDate('01/11/2026')).toThrow(RangeError);
+    });
+  });
+
   describe('windowOf', () => {
     it('knows the cap per route: 31 days on the composed reads, 90 on the others', () => {
       expect(WINDOW_CAP_DAYS).toEqual({

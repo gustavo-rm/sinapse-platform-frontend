@@ -30,6 +30,31 @@ function type(root: HTMLElement, value: string): void {
   input.dispatchEvent(new Event('input'));
 }
 
+describe('the handoff from registration (FE-6)', () => {
+  it('says the account was created and what has to happen next, only when arriving from it', async () => {
+    server.use(
+      http.get(ApiRoutes.readModel.myState, () =>
+        problemResponse('urn:sinapse:problem:unauthenticated'),
+      ),
+    );
+    const { root, router, harness } = await openApp('/entrar');
+    expect(root().textContent).not.toContain('Conta criada.');
+    await router.navigateByUrl('/verificar-email', { state: { sinapseRegistered: true } });
+    await harness.fixture.whenStable();
+    const text = root().textContent ?? '';
+    expect(text).toContain('Conta criada.');
+    expect(text).toContain('a conta só fica ativa depois disso, e até lá não é possível entrar');
+    // In development, where the token is today.
+    expect(text).toContain('DEV ONLY');
+    expect(text).toContain('console do servidor');
+  });
+
+  it('says nothing of a registration to a person who arrived otherwise', async () => {
+    const { root } = await openApp('/verificar-email');
+    expect(root().textContent).not.toContain('Conta criada.');
+  });
+});
+
 describe('the e-mail verification, /verificar-email — public, not a gate', () => {
   it('opens with no session and asks for nothing first', async () => {
     const { root, store } = await openApp('/verificar-email');

@@ -23,6 +23,17 @@ body.sn, .sn-root {
   border-radius: var(--radius-sm);
 }
 
+/* --- Link ------------------------------------------------------------------ */
+/* Texto de ação em primary (nota do token), sublinhado: nunca só pela cor. Um <a> com a
+   aparência de botão (.sn-btn) mantém a do botão. Acrescentado no FE-6, o primeiro com links em
+   texto corrido: sem esta regra valia o azul do navegador, que reprova o contraste no tema escuro. */
+.sn a:not(.sn-btn),
+.sn-root a:not(.sn-btn) {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: var(--space-0\.5);
+}
+
 /* --- Botão ---------------------------------------------------------------- */
 .sn-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-1);

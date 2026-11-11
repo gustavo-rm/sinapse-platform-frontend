@@ -62,7 +62,7 @@ const GATE_SCREENS: [string, Record<string, unknown>, string][] = [
     { accountStatus: 'PENDING_GUARDIAN_CONSENT' },
     'Consentimento do responsável',
   ],
-  ['/configurar', { setupComplete: false }, 'Configure seus estudos'],
+  // `/configurar` is no longer a placeholder: FE-7's screen, `features/setup/pages/*.spec.ts`.
 ];
 
 describe('accessibility of the session screens', () => {

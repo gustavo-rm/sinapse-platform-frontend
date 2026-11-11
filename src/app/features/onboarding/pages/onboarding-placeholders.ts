@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 /*
- * The two gate screens that have no flow yet. The guard chain (`core/session/gate.ts`) sends a
- * person to each; each is a heading and one sentence, and no control: a control would promise a
- * path that does not exist. Signing out stays possible from the public layout around them.
+ * The gate screen that has no flow: guardian consent. The guard chain (`core/session/gate.ts`)
+ * sends a person here; it is a heading and one sentence, and no control: a control would promise a
+ * path that does not exist. Signing out stays possible from the public layout around it. No
+ * operation completes a guardian's consent, and registration refuses minors in this version (K-E):
+ * a dead end by necessity, and unreachable today (row 5, measured in FE-4.1).
  *
- * - guardian consent: no operation completes it, and registration refuses minors in this version
- *   (K-E). A dead end by necessity, and unreachable today (row 5, measured in FE-4.1);
- * - setup: `POST /api/v1/availability` and `POST /api/v1/goals` — FE-7.
- *
+ * The setup screen (row 8) is `features/setup/pages/setup-page.ts` (FE-7).
  * The consent, reaffirmation and suspended screens are `features/privacy/pages/` (FE-5); the
  * e-mail verification screen is the public `features/auth/pages/verify-email-page.ts`.
  */
@@ -36,15 +35,3 @@ const STYLES = `
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GuardianConsentPage {}
-
-/** Row 8: `setupComplete` false. FE-7. */
-@Component({
-  selector: 'sn-setup-page',
-  template: `
-    <h1 class="display-md">Configure seus estudos</h1>
-    <p class="body">Falta dizer quando você estuda e o que você quer vencer.</p>
-  `,
-  styles: STYLES,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class SetupPage {}

@@ -133,8 +133,7 @@ export const routes: Routes = [
         path: at('setup'),
         title: 'Configure seus estudos · SINAPSE',
         canActivate: [gateGuard('setup')],
-        loadComponent: () =>
-          import('./features/onboarding/pages/onboarding-placeholders').then((m) => m.SetupPage),
+        loadComponent: () => import('./features/setup/pages/setup-page').then((m) => m.SetupPage),
       },
     ],
   },
@@ -162,6 +161,20 @@ export const routes: Routes = [
         loadChildren: () => import('./features/plan/pages/plan.routes').then((m) => m.PLAN_ROUTES),
       },
       // Before 'conta', which would otherwise take the whole path into its own routes.
+      {
+        path: 'conta/disponibilidade',
+        title: 'Disponibilidade · SINAPSE',
+        loadComponent: () =>
+          import('./features/setup/pages/account-availability-page').then(
+            (m) => m.AccountAvailabilityPage,
+          ),
+      },
+      {
+        path: 'conta/metas',
+        title: 'Metas · SINAPSE',
+        loadComponent: () =>
+          import('./features/setup/pages/account-goals-page').then((m) => m.AccountGoalsPage),
+      },
       {
         path: 'conta/consentimentos',
         title: 'Consentimentos · SINAPSE',

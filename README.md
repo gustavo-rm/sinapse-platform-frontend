@@ -19,14 +19,16 @@ premissa de arquitetura, não detalhe de implantação: a sessão viaja em um *c
 
 ### Estado
 
-**Entrada na conta (FE-6).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
+**Configuração inicial (FE-7).** Sobre a fundação de FE-2 (estrutura, fronteiras verificadas pelo
 *lint*, rotas e *layouts*, catálogo de rótulos, componentes de estado, serviço de tempo), a camada
 de API de FE-3 (contrato OpenAPI copiado com tipos gerados, `ApiRoutes`, `ApiClient`,
 interceptadores, política de nova tentativa, MSW) e a sessão de FE-4 (o *store* alimentado por
 `GET /api/v1/me/state`, a cadeia de *guards*, entrar, sair, trocar a senha, o fuso da conta),
 existem os consentimentos, a reafirmação, a conta suspensa e a confirmação de e-mail de FE-5, e,
 de FE-6, o cadastro (`/criar-conta`) e a redefinição de senha (`/esqueci-senha`,
-`/redefinir-senha`). A configuração inicial (`/configurar`) ainda é um marcador de lugar (FE-7).
+`/redefinir-senha`) e, de FE-7, a configuração inicial em dois passos (`/configurar`: disponibilidade
+semanal, depois metas por disciplina) e as telas de Conta que a mantêm (`/conta/disponibilidade`,
+`/conta/metas`). A tela Hoje ainda é um marcador de lugar (FE-8).
 Como a sessão funciona está em [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md); o detalhe, em
 [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
@@ -103,7 +105,9 @@ Feito e observado em 10/11/2026 contra `sinapse-platform@46b5b3c` (o *commit* de
    ```
 
    O catálogo de disciplinas começa vazio; para ter o que escolher como meta, importe-o uma vez
-   com o perfil `catalog`: `java -jar target/platform-*.jar --spring.profiles.active=catalog catalog apply`.
+   com o perfil `catalog`: `java -jar target/platform-*.jar --spring.profiles.active=catalog catalog apply`
+   (`docs/CARGA_DO_CATALOGO.md` no backend). Nunca por SQL. O catálogo de exemplo é uma disciplina,
+   "Anatomia Humana", com 35 tópicos.
 3. Este cliente: `npm start` (`ng serve`), em `http://localhost:4200`. A configuração
    `development` do `serve` usa `proxy.conf.json`, que encaminha `/api/v1` para
    `http://localhost:8080` sem reescrever o caminho. O backend não publica CORS e o cliente só usa
@@ -158,14 +162,16 @@ configuration.
 
 ### State
 
-**Account entry (FE-6).** On top of FE-2's foundation (structure, lint-checked boundaries, routes
+**Initial setup (FE-7).** On top of FE-2's foundation (structure, lint-checked boundaries, routes
 and layouts, label catalogue, state components, time service), FE-3's API layer (the vendored
 OpenAPI contract with generated types, `ApiRoutes`, `ApiClient`, interceptors, retry policy, MSW)
 and FE-4's session (the store fed by `GET /api/v1/me/state`, the guard chain, sign-in, sign-out,
 the password change, the account time zone), there are FE-5's consent, reaffirmation, suspended
 and e-mail verification screens and, from FE-6, registration (`/criar-conta`) and the password
-reset (`/esqueci-senha`, `/redefinir-senha`). The initial setup (`/configurar`) is still a
-placeholder (FE-7). How the session works is in [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md);
+reset (`/esqueci-senha`, `/redefinir-senha`) and, from FE-7, the two-step initial setup
+(`/configurar`: weekly availability, then goals over whole subjects) and the account screens that
+keep it current (`/conta/disponibilidade`, `/conta/metas`). Today (`/hoje`) is still a placeholder
+(FE-8). How the session works is in [`docs/ai/CONTEXT.md`](docs/ai/CONTEXT.md);
 details in [`docs/ai/STATE.md`](docs/ai/STATE.md).
 
 ```
@@ -242,7 +248,9 @@ Done and observed on 2026-11-10 against `sinapse-platform@46b5b3c` (the commit i
    ```
 
    The subject catalogue starts empty; to have something to set a goal on, import it once with the
-   `catalog` profile: `java -jar target/platform-*.jar --spring.profiles.active=catalog catalog apply`.
+   `catalog` profile: `java -jar target/platform-*.jar --spring.profiles.active=catalog catalog apply`
+   (`docs/CARGA_DO_CATALOGO.md` in the backend). Never by SQL. The example catalogue is one subject,
+   "Anatomia Humana", with 35 topics.
 3. This client: `npm start` (`ng serve`), on `http://localhost:4200`. The `development`
    configuration of `serve` uses `proxy.conf.json`, which forwards `/api/v1` to
    `http://localhost:8080` without rewriting the path. The backend publishes no CORS and the client

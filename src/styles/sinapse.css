@@ -275,6 +275,44 @@ body.sn, .sn-root {
 .sn-prio__pip { width: 6px; height: 12px; border-radius: 2px; background: var(--surface-sunken); }
 .sn-prio__pip--on { background: var(--primary-fill); }
 
+/* --- Janela registrada (FE-7) ------------------------------------------
+   Uma linha por janela: horário, período e a ação de encerrar. O painel inline (encerrar uma
+   janela, revisar uma meta) fica em surface-raised: ink-subtle sobre surface-sunken mede 4.43:1
+   no tema claro (FE-7), abaixo de 4.5. Uma janela encerrada continua
+   um REGISTRO: mesma tinta, mesmo peso, sem risco nem esmaecimento — o período escrito diz até
+   quando ela vale. Por isso FE-7 não usa .sn-avail__slot--closed (riscado), que lê como exclusão. */
+.sn-wrow { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-3); align-items: start; padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); }
+.sn-wrow:first-child { border-top: 0; }
+.sn-wrow__time { margin: 0; font-size: 15px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.sn-wrow__period { margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.sn-wrow__panel { grid-column: 1 / -1; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border-control); border-radius: var(--radius-md); background: var(--surface-raised); }
+
+/* --- Prioridade como controle (FE-7) ------------------------------------
+   Cinco rádios em segmento, 1 a 5; maior é mais prioritário. As pontas dizem o sentido em texto. */
+.sn-prio-field { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.sn-prio-field__opts { display: grid; grid-template-columns: repeat(5, minmax(var(--target-min), 1fr)); gap: var(--space-1); }
+.sn-prio-field__opt { position: relative; display: grid; place-items: center; min-height: var(--target-min); border: 1px solid var(--border-control); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--ink); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; }
+.sn-prio-field__opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.sn-prio-field__opt:has(input:checked) { border-color: var(--primary); border-width: 2px; background: var(--primary-soft); color: var(--primary); }
+.sn-prio-field__opt:has(input:focus-visible) { outline: 2px solid var(--focus-ring); outline-offset: var(--space-0\.5); }
+.sn-prio-field__ends { display: flex; justify-content: space-between; gap: var(--space-3); font-size: 12px; line-height: 16px; color: var(--ink-subtle); }
+
+/* --- Tópicos como contexto (FE-7) ---------------------------------------
+   A lista do que entra numa meta (decisão L3): numerada, sem controle, sem estado de hover. */
+.sn-topics { margin: 0; padding: var(--space-3) var(--space-4) var(--space-3) var(--space-8); border-radius: var(--radius-md); background: var(--surface-sunken); font-size: 13px; line-height: 18px; color: var(--ink); }
+.sn-topics li { padding: var(--space-1) 0; }
+.sn-topics li::marker { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+@media (min-width: 768px) { .sn-topics { columns: 2; column-gap: var(--space-8); } .sn-topics li { break-inside: avoid; } }
+
+/* --- Passos (FE-7) -------------------------------------------------------
+   Progresso de um fluxo curto em passos. O passo atual leva aria-current="step" e peso, não cor
+   sozinha; os outros ficam em tinta secundária. */
+.sn-steps { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 18px; color: var(--ink-muted); }
+.sn-steps__item { display: inline-flex; align-items: center; gap: var(--space-2); }
+.sn-steps__num { display: grid; place-items: center; width: var(--icon-md); height: var(--icon-md); border: 1px solid var(--border-control); border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sn-steps__item[aria-current="step"] { color: var(--ink); font-weight: 600; }
+.sn-steps__item[aria-current="step"] .sn-steps__num { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+
 /* --- Termos e divulgação ------------------------------------------------- */
 .sn-terms { max-width: var(--reading-max); }
 .sn-terms__body { font-size: 17px; line-height: 26px; }

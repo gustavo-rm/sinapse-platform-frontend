@@ -199,6 +199,32 @@ Os cinco que carregam mais regra de produto:
 
 **`InvitePreviewPanel`** — a prévia aparece **inteira** antes do aceite. É o que sustenta `INSTITUTION_SHARING` como consentimento informado; resumir descaracteriza o consentimento.
 
+### Acrescentado em FE-7, ainda não refletido no artefato
+
+FE-7 (configuração inicial, `/configurar`, `/conta/disponibilidade`, `/conta/metas`) acrescentou ao
+`sinapse.css` as regras abaixo, só com tokens existentes e nenhum token novo. O artefato precisa ser
+nivelado com elas; até lá, este documento e o `sinapse.css` estão à frente da fonte viva.
+
+| Regra | Componente | Para quê |
+|---|---|---|
+| `.sn-wrow`, `__time`, `__period`, `__panel` | `AvailabilityGrid` (lista) e `GoalCard` (revisão) | Uma linha por janela: horário, período por extenso ("A partir de 01/11/2026", "De 01/11/2026 a 05/11/2026") e "Encerrar". `__panel` é o painel inline de encerrar uma janela ou revisar uma meta, em `surface-raised` com `border-control`: `ink-subtle` sobre `surface-sunken` mediu 4.43:1 no tema claro |
+| `.sn-prio-field`, `__opts`, `__opt`, `__ends` | controle de prioridade (novo) | Cinco rádios em segmento, alvo `target-min`; o marcado em `primary-soft` com borda `primary` de 2px; o foco no rótulo (`:has(input:focus-visible)`). As pontas dizem o sentido em texto: "1 · menor", "5 · maior" — **5 é a maior prioridade** (backend e Core) |
+| `.sn-topics` | contexto de uma meta (novo) | Lista numerada dos tópicos que entram numa meta (decisão L3), em `surface-sunken`, `body-sm`, sem controle, sem *hover*, sem parada de foco; duas colunas a partir de `bp-md` |
+| `.sn-steps`, `__item`, `__num` | passos (novo) | Progresso de um fluxo curto ("Passo 1 de 2"). O passo atual leva `aria-current="step"` e peso 600, não só cor |
+
+Regras de uso acrescentadas, que o artefato também precisa registrar:
+
+- **Janela encerrada é registro, não exclusão.** O FE-7 não usa `.sn-avail__slot--closed` (riscado,
+  `ink-subtle`): o risco lê como exclusão, exatamente o que a operação diz que o encerramento não é.
+  Uma janela encerrada tem a mesma tinta e o mesmo peso das outras, e o período escrito.
+- **`SubjectPicker` sem posição.** O FE-7 não mostra `.sn-picker__pos`: `position` é a ordem do
+  código no catálogo, e um número ao lado de uma disciplina lê como classificação. As opções são
+  rádios nativos dentro de `.sn-picker`.
+- **Situação de meta sem cor que julgue.** Ativa, alcançada e abandonada usam o mesmo `sn-badge`
+  neutro; a palavra faz a diferença (§2.1).
+- **Data-alvo sem contagem regressiva.** A data aparece como a pessoa a deu ("Data-alvo: 15/07/2027"),
+  sem "faltam", sem barra até ela: é restrição de prioridade, não horizonte (decisão F3).
+
 ---
 
 ## 9. Estados e interações

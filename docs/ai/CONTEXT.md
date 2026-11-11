@@ -114,6 +114,58 @@ contract review):
    `normalised … byte-identical … true`.
 8. Update the baseline commit in this file and in `STATE.md`.
 
+## The setup contract, in one place (FE-7)
+
+Row 8 of the chain (`setupComplete` false → `/configurar`), the only gate a real account reaches
+today. Built in `features/setup/`; the decisions are H1–H11 in `STATE.md`.
+
+**What makes `setupComplete` true** — the server's condition, stated once in the backend
+(`PlanningDirectoryService.isReadyToPlan`, closed decision F2) and read both by `/me/state` and by the
+generation job, so a client that trusts the flag is never refused:
+
+- at least one goal with `status` `ACTIVE`; **and**
+- at least one availability window effective at some point between the server's today and the end
+  of the plan horizon (four weeks, F3). The server's today is in the application zone (UTC), not the
+  account's (K-V). A window that starts more than four weeks out, or one that already ended, does
+  not count.
+
+Neither half is in the contract, which types the flag as a bare boolean. This client never decides
+it: after every write of availability or goals it calls `SessionStore.refresh()`; `/configurar`
+offers "Continuar" only when the store holds `setupComplete: true`, and "Continuar" is
+`settle('setup')` — the chain routes (to `/hoje`). In the account area a write that makes the flag
+false keeps the person on the screen with a note; the chain sends them to `/configurar` at the next
+navigation. With the example catalogue (one subject, F24) closing the only goal does exactly that.
+
+**Asked for, and nothing else:** availability and goals (F2). No effort estimate, difficulty or
+self-assessment (L1). A goal is a whole subject (`subjectId`); every topic enters (L3), and the
+topics are shown as context, never as choices. The target date is a prioritisation constraint, not
+the horizon (F3): no countdown, no "until".
+
+**Direction of `priority`:** 1 to 5, **5 the most pressing**, 3 the default — the backend's source
+and the Core, not the contract (K-S).
+
+**`PATCH /goals/{goalId}` replaces:** `priority` is required and an omitted `targetDate` clears the
+date (K-T). The revision form starts from the values read and always sends both.
+
+**Local times on the wire (F19)** — one place, `core/time/local-time.ts`:
+
+| Direction | Accepts | Produces |
+|---|---|---|
+| in (`localTimeFromWire`) | `HH:mm` (the contract's examples) and `HH:mm:ss[.fffffffff]` (what the server echoes, observed on `46b5b3c` on every availability response) | `HH:mm` |
+| out (`localTimeToWire`) | `HH:mm`, or `HH:mm:ss` from an `<input type="time">` | `HH:mm` |
+
+No zone is applied either way: the server reads them in the account's zone. A window cannot cross
+midnight (`endTime` strictly after `startTime`, the server's own rule). A local date
+(`effectiveFrom`, `targetDate`) is shown with `AccountTimeService.formatLocalDate`, as the calendar
+day it names.
+
+**Which windows apply today** is the server's answer to `GET /api/v1/availability?on=<date>`, the date
+being `AccountTimeService.today()` — today in the ACCOUNT's zone. The read without `on` (every window,
+closed ones included) gives the record; the screen lists apart what the server did not return for
+today, by id. A closed window is a record: same ink, its period written, never struck through
+(F22). Closing asks for the last day it applies, inclusive; a day before it began is refused by the
+form because the server answers it with a 500 (K-U); a past day is allowed.
+
 ## How the session works, end to end
 
 Built in FE-4. Everything below is in `src/app/core/session/` unless named otherwise.

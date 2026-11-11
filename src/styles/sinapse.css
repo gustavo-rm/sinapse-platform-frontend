@@ -276,14 +276,16 @@ body.sn, .sn-root {
 .sn-prio__pip--on { background: var(--primary-fill); }
 
 /* --- Janela registrada (FE-7) ------------------------------------------
-   Uma linha por janela: horário, período e a ação de encerrar. Uma janela encerrada continua
+   Uma linha por janela: horário, período e a ação de encerrar. O painel inline (encerrar uma
+   janela, revisar uma meta) fica em surface-raised: ink-subtle sobre surface-sunken mede 4.43:1
+   no tema claro (FE-7), abaixo de 4.5. Uma janela encerrada continua
    um REGISTRO: mesma tinta, mesmo peso, sem risco nem esmaecimento — o período escrito diz até
    quando ela vale. Por isso FE-7 não usa .sn-avail__slot--closed (riscado), que lê como exclusão. */
 .sn-wrow { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-3); align-items: start; padding: var(--space-3) 0; border-top: 1px solid var(--border-subtle); }
 .sn-wrow:first-child { border-top: 0; }
 .sn-wrow__time { margin: 0; font-size: 15px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; color: var(--ink); }
 .sn-wrow__period { margin: 0; font-size: 13px; line-height: 18px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
-.sn-wrow__panel { grid-column: 1 / -1; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--surface-sunken); }
+.sn-wrow__panel { grid-column: 1 / -1; display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border-control); border-radius: var(--radius-md); background: var(--surface-raised); }
 
 /* --- Prioridade como controle (FE-7) ------------------------------------
    Cinco rádios em segmento, 1 a 5; maior é mais prioritário. As pontas dizem o sentido em texto. */

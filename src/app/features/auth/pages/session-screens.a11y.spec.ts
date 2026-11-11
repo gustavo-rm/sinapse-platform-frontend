@@ -74,12 +74,14 @@ describe('accessibility of the session screens', () => {
       expect(root.querySelector('nav')).toBeNull();
     });
 
-    it('is walked by keyboard: e-mail, password, submit, then the theme', async () => {
+    it('is walked by keyboard: e-mail, password, submit, the two entry points, then the theme', async () => {
       const { root } = await render('/entrar');
       expect(keyboardPath(root)).toEqual([
         'input:E-mail',
         'input:Senha',
         'button:Entrar',
+        'a:Esqueci minha senha',
+        'a:Criar conta',
         expect.stringMatching(/^select:/),
       ]);
     });

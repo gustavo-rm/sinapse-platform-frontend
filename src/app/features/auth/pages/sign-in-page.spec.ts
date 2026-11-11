@@ -88,7 +88,12 @@ describe('the sign-in screen', () => {
       'sign-in-email',
       'sign-in-password',
       'Entrar',
+      // FE-6: the two entry points, after the form.
+      'Esqueci minha senha',
+      'Criar conta',
     ]);
+    expect(root().querySelector('a[href="/esqueci-senha"]')).not.toBeNull();
+    expect(root().querySelector('a[href="/criar-conta"]')).not.toBeNull();
     expect(root().querySelector('#sign-in-password')?.getAttribute('type')).toBe('password');
     expect(root().querySelector('#sign-in-password')?.getAttribute('autocomplete')).toBe(
       'current-password',

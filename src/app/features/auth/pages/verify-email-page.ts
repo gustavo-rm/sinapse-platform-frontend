@@ -8,6 +8,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { Location } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -17,14 +18,17 @@ import { SessionStore } from '../../../core/session/session-store';
 import { ErrorState } from '../../../shared/ui/error-state/error-state';
 import { RateLimitNotice } from '../../../shared/ui/rate-limit-notice/rate-limit-notice';
 import { EmailVerification } from '../data/email-verification';
+import { DevTokenNote } from '../ui/dev-token-note';
+import { REGISTERED_STATE_KEY } from '../model/registration-outcome';
+import { TOKEN_PARAM, takeTokenFromUrl } from './single-use-token';
 
 /**
  * The query parameter that carries the token: `/verificar-email?token=<token>`. This path and this
  * parameter are the CONTRACT the backend needs to build the link of its verification e-mail —
  * its own documentation says it does not know the frontend's address nor its verification route
- * (F18). Recorded in `docs/ai/CONTEXT.md`.
+ * (F18). Recorded in `docs/ai/CONTEXT.md`. The same parameter as the reset link's (FE-6).
  */
-export const VERIFICATION_TOKEN_PARAM = 'token';
+export const VERIFICATION_TOKEN_PARAM = TOKEN_PARAM;
 
 export const NOT_ACCEPTED_MESSAGE =
   'Este código de confirmação não foi aceito. Ele pode ter expirado, já ter sido usado ou estar incompleto. Nesta versão não há como pedir um novo código por aqui.';
@@ -50,12 +54,25 @@ const EMPTY_MESSAGE = 'Cole o código de confirmação que você recebeu.';
  */
 @Component({
   selector: 'sn-verify-email-page',
-  imports: [ReactiveFormsModule, ErrorState, RateLimitNotice],
+  imports: [ReactiveFormsModule, DevTokenNote, ErrorState, RateLimitNotice],
   template: `
     <h1 class="display-md">Confirme seu e-mail</h1>
+    @if (registered) {
+      <!-- The handoff from /criar-conta (FE-6): what happened, and what has to happen next. -->
+      <div class="sn-alert sn-alert--success registered" role="status">
+        <div>
+          <div class="sn-alert__title">Conta criada.</div>
+          <div class="sn-alert__body">
+            Falta confirmar o endereço de e-mail: a conta só fica ativa depois disso, e até lá não é
+            possível entrar. Use o código de confirmação enviado para o endereço informado.
+          </div>
+        </div>
+      </div>
+    }
     <p class="lead intro">
       Para ativar a conta, confirme o endereço de e-mail com o código que você recebeu.
     </p>
+    <sn-dev-token-note kind="verification" class="dev" />
 
     <!-- Always in the document, so the wait of a link's code is announced. -->
     <div class="status" role="status" aria-atomic="true">
@@ -128,6 +145,10 @@ const EMPTY_MESSAGE = 'Cole o código de confirmação que você recebeu.';
       margin: 0 0 var(--space-6);
       color: var(--ink-muted);
     }
+    .registered,
+    .dev {
+      margin-bottom: var(--space-6);
+    }
     .status:empty,
     .announce:empty {
       display: none;
@@ -150,6 +171,18 @@ export class VerifyEmailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly field = viewChild.required<ElementRef<HTMLInputElement>>('field');
 
+  /**
+   * Arrived from `/criar-conta` with a 201 (FE-6): the navigation state says so, nothing else. Read
+   * from the navigation under way, or — after a reload — from the history entry that kept it.
+   */
+  protected readonly registered = [
+    this.router.currentNavigation()?.extras.state,
+    inject(Location).getState(),
+  ].some(
+    (state) =>
+      (state as Record<string, unknown> | null | undefined)?.[REGISTERED_STATE_KEY] === true,
+  );
+
   protected readonly token = new FormControl('', { nonNullable: true });
   protected readonly submitting = signal(false);
   protected readonly fieldError = signal<string | null>(null);
@@ -169,17 +202,11 @@ export class VerifyEmailPage implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const fromLink = this.route.snapshot.queryParamMap.get(VERIFICATION_TOKEN_PARAM);
-    if (fromLink === null) {
+    // Out of the address bar and the history entry first, whatever happens next.
+    const token = await takeTokenFromUrl(this.router, this.route);
+    if (token === null) {
       return;
     }
-    // Out of the address bar and the history entry first, whatever happens next.
-    await this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: {},
-      replaceUrl: true,
-    });
-    const token = fromLink.trim();
     if (token !== '') {
       await this.consume(token, 'link');
     } else {

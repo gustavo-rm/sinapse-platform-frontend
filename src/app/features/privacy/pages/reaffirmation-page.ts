@@ -15,8 +15,9 @@ import { ErrorState } from '../../../shared/ui/error-state/error-state';
 import { LoadingState } from '../../../shared/ui/loading-state/loading-state';
 import { RateLimitNotice } from '../../../shared/ui/rate-limit-notice/rate-limit-notice';
 import { PrivacyApi } from '../data/privacy-api';
-import { currentWordings, inContractOrder } from '../model/consent';
-import { ConsentDisclosure } from '../ui/consent-disclosure';
+import { inContractOrder } from '../model/consent';
+import { ConsentDisclosure } from '../../../shared/ui/consent-disclosure/consent-disclosure';
+import { currentWordings } from '../../../shared/ui/consent-disclosure/wording';
 
 export const REFUSED_MESSAGE =
   'A reafirmação não foi aceita no estado atual da conta. A situação foi atualizada.';

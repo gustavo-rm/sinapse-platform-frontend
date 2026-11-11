@@ -14,9 +14,20 @@ import { AccountTimeService, type InstantFormat } from '../../core/time/account-
 export class AccountDatePipe implements PipeTransform {
   private readonly time = inject(AccountTimeService);
 
-  transform(instant: string | Date | null | undefined, format: InstantFormat = 'dateTime'): string {
-    return instant === null || instant === undefined
-      ? ''
-      : this.time.formatInstant(instant, format);
+  /**
+   * `zone`: only where there is no account yet — the registration form passes the zone the person
+   * is declaring (FE-6). Everywhere else, leave it out: the account's zone is the one.
+   */
+  transform(
+    instant: string | Date | null | undefined,
+    format: InstantFormat = 'dateTime',
+    zone?: string | null,
+  ): string {
+    if (instant === null || instant === undefined) {
+      return '';
+    }
+    return zone === null || zone === undefined || zone === ''
+      ? this.time.formatInstant(instant, format)
+      : this.time.formatInstant(instant, format, zone);
   }
 }

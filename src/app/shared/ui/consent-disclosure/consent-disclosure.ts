@@ -1,10 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 
-import { CONSENT_PURPOSE_KIND_LABELS } from '../../../shared/labels/consent-purpose-kind.labels';
-import { CONSENT_PURPOSE_NOTE_LABELS } from '../../../shared/labels/consent-purpose-note.labels';
-import { CONSENT_PURPOSE_LABELS } from '../../../shared/labels/consent-purpose.labels';
-import { AccountDatePipe } from '../../../shared/pipes/account-date.pipe';
-import { type Wording, isDevelopmentPlaceholder } from '../model/consent';
+import { CONSENT_PURPOSE_KIND_LABELS } from '../../labels/consent-purpose-kind.labels';
+import { CONSENT_PURPOSE_NOTE_LABELS } from '../../labels/consent-purpose-note.labels';
+import { CONSENT_PURPOSE_LABELS } from '../../labels/consent-purpose.labels';
+import { AccountDatePipe } from '../../pipes/account-date.pipe';
+import { type Wording, isDevelopmentPlaceholder } from './wording';
 
 let nextId = 0;
 
@@ -36,7 +44,7 @@ let nextId = 0;
       <div class="sn-terms__ver">
         versão {{ wording().version }}
         @if (wording().publishedAt; as published) {
-          · publicada em {{ published | accountDate: 'longDate' }}
+          · publicada em {{ published | accountDate: 'longDate' : zone() }}
         }
       </div>
 
@@ -58,7 +66,10 @@ let nextId = 0;
             [id]="id + '-choice'"
             [checked]="checked()"
             [disabled]="disabled()"
-            [attr.aria-describedby]="id + '-note'"
+            [attr.aria-describedby]="
+              error() !== null ? id + '-note ' + id + '-error' : id + '-note'
+            "
+            [attr.aria-invalid]="error() !== null ? 'true' : null"
             (change)="toggled.emit($any($event.target).checked)"
           />
           <span class="sn-choice__text">
@@ -66,6 +77,9 @@ let nextId = 0;
             <span class="sn-choice__note" [id]="id + '-note'">{{ note() }}</span>
           </span>
         </label>
+        @if (error(); as text) {
+          <div class="sn-field__error choice-error" [id]="id + '-error'">{{ text }}</div>
+        }
       } @else {
         <p class="sn-choice__note note" [id]="id + '-note'">{{ note() }}</p>
       }
@@ -86,6 +100,9 @@ let nextId = 0;
     .decision {
       margin-top: var(--space-5);
     }
+    .choice-error {
+      margin-top: var(--space-2);
+    }
     .note {
       margin: var(--space-4) 0 0;
     }
@@ -100,6 +117,13 @@ export class ConsentDisclosure {
   /** The person's choice. Starts false wherever this is used: never pre-checked. */
   readonly checked = input(false);
   readonly disabled = input(false);
+  /**
+   * The zone to date the publication in when there is no account yet (registration: the zone the
+   * person is declaring). Null everywhere else: the account's zone.
+   */
+  readonly zone = input<string | null>(null);
+  /** A message about the choice, from the form that holds it (the essential purpose left unchecked). */
+  readonly error = input<string | null>(null);
   readonly toggled = output<boolean>();
 
   protected readonly id = `sn-disclosure-${nextId++}`;
@@ -107,4 +131,10 @@ export class ConsentDisclosure {
   protected readonly kind = computed(() => CONSENT_PURPOSE_KIND_LABELS[this.wording().purpose]);
   protected readonly note = computed(() => CONSENT_PURPOSE_NOTE_LABELS[this.wording().purpose]);
   protected readonly placeholder = computed(() => isDevelopmentPlaceholder(this.wording()));
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** Moves focus to the checkbox, for a form that points the person at this choice. */
+  focusChoice(): void {
+    this.host.nativeElement.querySelector<HTMLInputElement>('input[type="checkbox"]')?.focus();
+  }
 }

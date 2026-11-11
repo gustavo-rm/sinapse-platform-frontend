@@ -27,11 +27,11 @@ import {
   SUSPENSION_CONFIRM_WORD,
   type WithdrawalEffect,
   consentsInForce,
-  currentWordings,
   grantableHere,
   withdrawalEffectOf,
 } from '../model/consent';
-import { ConsentDisclosure } from '../ui/consent-disclosure';
+import { ConsentDisclosure } from '../../../shared/ui/consent-disclosure/consent-disclosure';
+import { currentWordings } from '../../../shared/ui/consent-disclosure/wording';
 
 /** What the screen says after an act, in the status region. */
 const DONE = {

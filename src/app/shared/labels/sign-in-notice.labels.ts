@@ -21,4 +21,8 @@ export const SIGN_IN_NOTICE_LABELS: Record<SignInNotice, string> = {
   // is the server's decision (a holder below the consent age would wait for a guardian instead),
   // and signing in will show it.
   'email-verified': 'Seu e-mail foi confirmado. Entre com seu e-mail e sua senha para continuar.',
+  // The confirmation ends every session of the account in the same transaction (the snapshot), so
+  // the sentence says so, as the password change does.
+  'password-reset':
+    'Sua senha foi redefinida, e todas as sessões desta conta foram encerradas. Entre com a nova senha.',
 };

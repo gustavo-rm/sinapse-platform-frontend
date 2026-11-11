@@ -3,11 +3,19 @@ import { Routes } from '@angular/router';
 import {
   APP_HOME_PATH,
   type Gate,
+  PASSWORD_RESET_PATH,
+  PASSWORD_RESET_REQUEST_PATH,
+  REGISTRATION_PATH,
   SESSION_UNAVAILABLE_PATH,
   SIGN_IN_PATH,
   pathOf,
 } from './core/session/gate';
-import { gateGuard, sessionGuard, unavailableGuard } from './core/session/session-guards';
+import {
+  gateGuard,
+  publicGuard,
+  sessionGuard,
+  unavailableGuard,
+} from './core/session/session-guards';
 
 /** A gate's path as the router writes it, without the leading slash: one source, `pathOf`. */
 function at(gate: Gate): string {
@@ -38,6 +46,32 @@ export const routes: Routes = [
         path: SIGN_IN_PATH.slice(1),
         title: 'Entrar · SINAPSE',
         loadChildren: () => import('./features/auth/pages/auth.routes').then((m) => m.AUTH_ROUTES),
+      },
+      // PUBLIC, guarded by `publicGuard` (FE-6): open to a person with no session; anyone signed in
+      // is sent on to where the chain says they belong.
+      {
+        path: REGISTRATION_PATH.slice(1),
+        title: 'Criar conta · SINAPSE',
+        canActivate: [publicGuard],
+        loadComponent: () =>
+          import('./features/auth/pages/registration-page').then((m) => m.RegistrationPage),
+      },
+      {
+        path: PASSWORD_RESET_REQUEST_PATH.slice(1),
+        title: 'Redefinir a senha · SINAPSE',
+        canActivate: [publicGuard],
+        loadComponent: () =>
+          import('./features/auth/pages/password-reset-request-page').then(
+            (m) => m.PasswordResetRequestPage,
+          ),
+      },
+      // Reached by a link with `?token=` — the contract the backend needs (`docs/ai/CONTEXT.md`).
+      {
+        path: PASSWORD_RESET_PATH.slice(1),
+        title: 'Escolha uma nova senha · SINAPSE',
+        canActivate: [publicGuard],
+        loadComponent: () =>
+          import('./features/auth/pages/password-reset-page').then((m) => m.PasswordResetPage),
       },
       {
         path: SESSION_UNAVAILABLE_PATH.slice(1),

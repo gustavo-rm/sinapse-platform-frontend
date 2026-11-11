@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import type { CanActivateChildFn, CanActivateFn, GuardResult } from '@angular/router';
-import { Router } from '@angular/router';
+import { RedirectCommand, Router } from '@angular/router';
 
 import {
   APP_HOME_PATH,
@@ -8,6 +8,7 @@ import {
   type GuardTarget,
   SESSION_UNAVAILABLE_PATH,
   accessTo,
+  accessToPublic,
   pathOf,
 } from './gate';
 import { SessionStore } from './session-store';
@@ -74,4 +75,33 @@ export function gateGuard(gate: Exclude<GuardTarget, 'app'>): CanActivateFn {
 export const unavailableGuard: CanActivateFn = () => {
   const store = inject(SessionStore);
   return store.status() === 'failed' ? true : inject(Router).parseUrl(APP_HOME_PATH);
+};
+
+/**
+ * On a public screen that creates or recovers an account — registration, password reset (FE-6).
+ * The mirror of `gateGuard`: nobody signed in belongs there, so a person with a session is sent on
+ * to where the chain says they belong (`accessToPublic`). A person with none is let through.
+ *
+ * - The state is read through `SessionStore.peek`, for which a 401 is the expected answer of a
+ *   visitor and not an expiry: no redirect to sign in, no notice, no remembered route.
+ * - A bootstrap that FAILED tells nothing about the session, and these screens depend on none: the
+ *   person is let through, and the form shows its own error if the server is unreachable.
+ * - The redirect REPLACES the history entry, so the link's `?token=` of a reset opened by a person
+ *   with a session does not stay in the back stack.
+ */
+export const publicGuard: CanActivateFn = async () => {
+  const store = inject(SessionStore);
+  const router = inject(Router);
+
+  const outcome = await store.peek();
+  if (outcome.kind !== 'signed-in') {
+    return true;
+  }
+  const access = accessToPublic({ kind: 'state', state: outcome.state }, store.chainContext());
+  if (access === true) {
+    return true;
+  }
+  return new RedirectCommand(router.parseUrl(access === 'app' ? APP_HOME_PATH : pathOf(access)), {
+    replaceUrl: true,
+  });
 };

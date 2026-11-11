@@ -81,6 +81,42 @@ describe('AccountTimeService', () => {
     it('refuses a string that is not an instant', () => {
       expect(() => time.formatInstant('amanhã')).toThrow(RangeError);
     });
+
+    it('formats in an explicit zone before there is an account (registration, FE-6), without a warning', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      // 00:29 UTC on the 11th is still the 10th in São Paulo and already the 11th in Tokyo.
+      expect(time.formatInstant('2026-11-11T00:29:48Z', 'longDate', 'America/Sao_Paulo')).toBe(
+        '10 de novembro de 2026',
+      );
+      expect(time.formatInstant('2026-11-11T00:29:48Z', 'longDate', 'Asia/Tokyo')).toBe(
+        '11 de novembro de 2026',
+      );
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('ignores an explicit zone it does not know, and keeps the account zone', () => {
+      time.setAccountZone(WEST);
+      expect(time.formatInstant('2026-11-04T15:00:00Z', 'longDate', 'Nowhere/Atlantis')).toBe(
+        '4 de novembro de 2026',
+      );
+    });
+  });
+
+  describe('the zone a person declares (registration)', () => {
+    it('suggests the runtime zone — a suggestion only: it never becomes the account zone', () => {
+      expect(time.suggestedZone()).toBe(RUNTIME_ZONE);
+      expect(time.zone()).toBe('UTC');
+    });
+
+    it('lists the known zones, sorted, adding a suggestion the runtime list leaves out', () => {
+      const zones = time.knownZones(['UTC', null, 'Nowhere/Atlantis']);
+      expect(zones).toContain('America/Sao_Paulo');
+      expect(zones).toContain('Asia/Tokyo');
+      expect(zones).toContain('UTC');
+      expect(zones).not.toContain('Nowhere/Atlantis');
+      expect([...zones]).toEqual([...zones].sort());
+      expect(new Set(zones).size).toBe(zones.length);
+    });
   });
 
   describe('toInstant', () => {

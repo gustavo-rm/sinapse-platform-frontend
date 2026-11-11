@@ -9,9 +9,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import type { ApiFailure } from '../../../core/api/api-problem';
+import { PASSWORD_RESET_REQUEST_PATH, REGISTRATION_PATH } from '../../../core/session/gate';
 import { SessionStore } from '../../../core/session/session-store';
 import { SIGN_IN_NOTICE_LABELS } from '../../../shared/labels/sign-in-notice.labels';
 import { ErrorState } from '../../../shared/ui/error-state/error-state';
@@ -50,7 +51,7 @@ const FORM_LEVEL_INVALID =
  */
 @Component({
   selector: 'sn-sign-in-page',
-  imports: [ReactiveFormsModule, ErrorState, RateLimitNotice],
+  imports: [ReactiveFormsModule, RouterLink, ErrorState, RateLimitNotice],
   template: `
     <h1 class="display-lg">Entrar</h1>
 
@@ -124,6 +125,12 @@ const FORM_LEVEL_INVALID =
         {{ submitting() ? 'Entrando…' : 'Entrar' }}
       </button>
     </form>
+
+    <!-- FE-6: where a new person, and one who cannot get in, go from here. -->
+    <ul class="paths">
+      <li><a [routerLink]="resetPath">Esqueci minha senha</a></li>
+      <li>Ainda não tem conta? <a [routerLink]="registrationPath">Criar conta</a></li>
+    </ul>
   `,
   styles: `
     :host {
@@ -143,6 +150,14 @@ const FORM_LEVEL_INVALID =
     .announce:empty {
       display: none;
     }
+    .paths {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: var(--space-8) 0 0;
+      padding: 0;
+      list-style: none;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -154,6 +169,8 @@ export class SignInPage {
   private readonly passwordInput = viewChild.required<ElementRef<HTMLInputElement>>('password');
 
   protected readonly messages = FIELD_MESSAGES;
+  protected readonly resetPath = PASSWORD_RESET_REQUEST_PATH;
+  protected readonly registrationPath = REGISTRATION_PATH;
   protected readonly form = new FormGroup({
     email: new FormControl('', {
       nonNullable: true,

@@ -105,10 +105,42 @@ export class AccountTimeService {
     this.accountZone.set(timeZone);
   }
 
-  /** Formats an instant in the account's zone. */
-  formatInstant(instant: string | Date, format: InstantFormat = 'dateTime'): string {
+  /**
+   * Formats an instant in the account's zone — or, before there is an account, in `zone`: the zone
+   * the person is declaring on the registration form (FE-6), which will be the account's. A `zone`
+   * this runtime does not know is ignored, and the account's zone (or UTC) is used.
+   */
+  formatInstant(instant: string | Date, format: InstantFormat = 'dateTime', zone?: string): string {
     const date = toDate(instant);
-    return this.formatter(this.effectiveZone(), FORMAT_OPTIONS[format]).format(date);
+    const use = zone !== undefined && isKnownZone(zone) ? zone : this.effectiveZone();
+    return this.formatter(use, FORMAT_OPTIONS[format]).format(date);
+  }
+
+  /**
+   * The browser's IANA zone, as a SUGGESTION for a person declaring their zone (registration). Never
+   * the account's zone: the server does not guess it, and nothing else in this client may read the
+   * browser's zone (R4). Null when the runtime does not report one.
+   */
+  suggestedZone(): string | null {
+    try {
+      const zone = new Intl.DateTimeFormat(LOCALE).resolvedOptions().timeZone;
+      return typeof zone === 'string' && zone !== '' && isKnownZone(zone) ? zone : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * The IANA zones this runtime knows, sorted, for a person to choose from. `include` (the suggestion,
+   * or a value already chosen) is added when the runtime's list leaves it out — `UTC` is absent from
+   * some engines' lists although every engine accepts it.
+   */
+  knownZones(include: readonly (string | null)[] = []): readonly string[] {
+    const listed = supportedZones();
+    const extra = include.filter(
+      (zone): zone is string => zone !== null && isKnownZone(zone) && !listed.includes(zone),
+    );
+    return [...listed, ...extra].sort();
   }
 
   /**
@@ -225,6 +257,17 @@ export class AccountTimeService {
 
   private localDateAt(utc: number, zone: string): string {
     return new Date(this.wallAt(utc, zone)).toISOString().slice(0, 10);
+  }
+}
+
+function supportedZones(): string[] {
+  const intl = Intl as typeof Intl & { supportedValuesOf?: (key: 'timeZone') => string[] };
+  try {
+    return typeof intl.supportedValuesOf === 'function'
+      ? [...intl.supportedValuesOf('timeZone')]
+      : [];
+  } catch {
+    return [];
   }
 }
 

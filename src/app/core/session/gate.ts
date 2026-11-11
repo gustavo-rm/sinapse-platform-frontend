@@ -165,8 +165,34 @@ export function accessTo(
   return gate === target ? true : gate;
 }
 
+/**
+ * What the guard of a PUBLIC screen does (registration and password reset, FE-6): the mirror of a
+ * gate screen's. A person with no session is let through; a person with one is sent on to where the
+ * chain says they belong — their gate, or the application. So `PENDING_VERIFICATION` goes to
+ * `/verificar-email`, which the chain already names (row 4).
+ */
+export function accessToPublic(
+  bootstrap: Bootstrap,
+  context: ChainContext = {},
+): true | Exclude<Gate, 'sign-in'> | 'app' {
+  if (bootstrap.kind === 'unauthenticated') {
+    return true;
+  }
+  const gate = gateOf(bootstrap, context);
+  // 'sign-in' is only ever the answer to an unauthenticated bootstrap, handled above.
+  return gate === null || gate === 'sign-in' ? 'app' : gate;
+}
+
 /** The in-app path of each gate, and where the application opens. */
 export const SIGN_IN_PATH = '/entrar';
+/**
+ * The public screens that create and recover an account (FE-6). Client paths, not backend routes.
+ * `PASSWORD_RESET_PATH` with `?token=` is the CONTRACT the backend needs for the link of its reset
+ * e-mail, as `/verificar-email?token=` is for verification (`docs/ai/CONTEXT.md`).
+ */
+export const REGISTRATION_PATH = '/criar-conta';
+export const PASSWORD_RESET_REQUEST_PATH = '/esqueci-senha';
+export const PASSWORD_RESET_PATH = '/redefinir-senha';
 export const APP_HOME_PATH = '/hoje';
 /** The screen shown when the bootstrap itself failed, so no gate can be decided. */
 export const SESSION_UNAVAILABLE_PATH = '/indisponivel';

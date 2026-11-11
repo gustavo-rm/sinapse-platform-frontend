@@ -25,7 +25,9 @@ const NEW_PASSWORD = 'nova-senha-que-nao-pode-vazar-92';
 const TOKEN = 'token-opaco-que-nao-pode-vazar-93';
 /** An e-mail verification token: a single-use credential that arrives in a URL (FE-5). */
 const VERIFICATION_TOKEN = 'verificacao-de-uso-unico-que-nao-pode-vazar-94';
-const SECRETS = [EMAIL, PASSWORD, NEW_PASSWORD, TOKEN, VERIFICATION_TOKEN];
+/** A password-reset token: a single-use credential that authorises the change on its own (FE-6). */
+const RESET_TOKEN = 'redefinicao-de-uso-unico-que-nao-pode-vazar-95';
+const SECRETS = [EMAIL, PASSWORD, NEW_PASSWORD, TOKEN, VERIFICATION_TOKEN, RESET_TOKEN];
 
 function activeState(): JsonBodyType {
   return {
@@ -290,6 +292,167 @@ describe('no secret reaches the console or storage', () => {
     window.history.replaceState(null, '', `/verificar-email?token=${VERIFICATION_TOKEN}`);
     expect(() => assertVerificationTokenGone(root)).toThrow();
     window.history.replaceState(null, '', '/');
+  });
+
+  /** No session: the visitor of the public screens of FE-6. */
+  const anonymous = () =>
+    http.get(ApiRoutes.readModel.myState, () =>
+      leakyProblem('urn:sinapse:problem:unauthenticated', 401),
+    );
+
+  /** What the reset token must never be found in once the flow is over. */
+  function assertResetTokenGone(root: () => HTMLElement): void {
+    assertNothingLeaked();
+    expect(document.title).not.toContain(RESET_TOKEN);
+    expect(window.location.href).not.toContain(RESET_TOKEN);
+    expect(TestBed.inject(Router).url).not.toContain(RESET_TOKEN);
+    expect(root().textContent).not.toContain(RESET_TOKEN);
+    expect(root().textContent).not.toContain(NEW_PASSWORD);
+    for (const input of root().querySelectorAll('input')) {
+      expect(input.value).not.toContain(RESET_TOKEN);
+    }
+  }
+
+  it.each([
+    [
+      '201',
+      () => HttpResponse.json({ accountId: 'a', status: 'PENDING_VERIFICATION' }, { status: 201 }),
+    ],
+    [
+      '400',
+      () =>
+        leakyProblem('urn:sinapse:problem:validation-failed', 400, [
+          { field: 'email', message: `bad ${EMAIL}` },
+          { field: 'password', message: `bad ${PASSWORD}` },
+        ]),
+    ],
+    ['409', () => leakyProblem('urn:sinapse:problem:conflict', 409)],
+    ['422', () => leakyProblem('urn:sinapse:problem:minor-registration-not-supported', 422)],
+    ['429', () => leakyProblem('urn:sinapse:problem:rate-limit-exceeded', 429)],
+    ['500', () => leakyProblem('urn:sinapse:problem:internal-error', 500)],
+  ])('through a registration answered %s', async (_name, answer) => {
+    let received: unknown = null;
+    server.use(
+      anonymous(),
+      http.get(ApiRoutes.identity.terms, () =>
+        HttpResponse.json([
+          {
+            id: 'ldp',
+            purpose: 'LEARNING_DATA_PROCESSING',
+            version: '1',
+            body: 'Texto.',
+            publishedAt: '2026-11-10T00:00:00Z',
+          },
+        ]),
+      ),
+      http.post(ApiRoutes.identity.accounts, async ({ request }) => {
+        received = await request.json();
+        return answer();
+      }),
+    );
+    const { type, submit, root, harness } = await open('/criar-conta');
+    await vi.waitFor(() => expect(root().querySelector('#registration-email')).not.toBeNull());
+    type('registration-email', EMAIL);
+    type('registration-password', PASSWORD);
+    type('registration-birth', '1996-01-01');
+    (root().querySelector('input[type="checkbox"]') as HTMLInputElement).click();
+    await submit();
+    await vi.waitFor(() => expect(received).toMatchObject({ email: EMAIL, password: PASSWORD }));
+    await harness.fixture.whenStable();
+
+    assertNothingLeaked();
+    expect(root().textContent).not.toContain(PASSWORD);
+    expect(root().textContent).not.toContain(EMAIL);
+  });
+
+  it.each([
+    ['204', () => new HttpResponse(null, { status: 204 })],
+    ['429', () => leakyProblem('urn:sinapse:problem:rate-limit-exceeded', 429)],
+    ['500', () => leakyProblem('urn:sinapse:problem:internal-error', 500)],
+  ])('through a password-reset request answered %s', async (_name, answer) => {
+    let received: unknown = null;
+    server.use(
+      anonymous(),
+      http.post(ApiRoutes.identity.passwordResets, async ({ request }) => {
+        received = await request.json();
+        return answer();
+      }),
+    );
+    const { type, submit, root } = await open('/esqueci-senha');
+    type('reset-email', EMAIL);
+    await submit();
+    await vi.waitFor(() => expect(received).toEqual({ email: EMAIL }));
+    assertNothingLeaked();
+    // The address is not shown back by the confirmation.
+    if (root().querySelector('#reset-email') === null) {
+      expect(root().textContent).not.toContain(EMAIL);
+    }
+  });
+
+  it.each([
+    ['204', () => new HttpResponse(null, { status: 204 })],
+    ['404', () => leakyProblem('urn:sinapse:problem:resource-not-found', 404)],
+    ['429', () => leakyProblem('urn:sinapse:problem:rate-limit-exceeded', 429)],
+    ['500', () => leakyProblem('urn:sinapse:problem:internal-error', 500)],
+  ])('through a password reset by URL answered %s', async (_name, answer) => {
+    let received: unknown = null;
+    server.use(
+      anonymous(),
+      http.post(ApiRoutes.identity.passwordResetConfirmation, async ({ request }) => {
+        received = await request.json();
+        return answer();
+      }),
+    );
+    const { type, submit, root, harness } = await open(`/redefinir-senha?token=${RESET_TOKEN}`);
+    await vi.waitFor(() => expect(root().querySelector('#reset-new-password')).not.toBeNull());
+    await harness.fixture.whenStable();
+    type('reset-new-password', NEW_PASSWORD);
+    await submit();
+    await vi.waitFor(() =>
+      expect(received).toEqual({ token: RESET_TOKEN, newPassword: NEW_PASSWORD }),
+    );
+    await harness.fixture.whenStable();
+    const password = root().querySelector<HTMLInputElement>('#reset-new-password');
+    if (password) {
+      password.value = '';
+    }
+    assertResetTokenGone(root);
+  });
+
+  it.each([
+    ['204', () => new HttpResponse(null, { status: 204 })],
+    ['404', () => leakyProblem('urn:sinapse:problem:resource-not-found', 404)],
+  ])('through a password reset by a pasted token answered %s', async (_name, answer) => {
+    let received: unknown = null;
+    server.use(
+      anonymous(),
+      http.post(ApiRoutes.identity.passwordResetConfirmation, async ({ request }) => {
+        received = await request.json();
+        return answer();
+      }),
+    );
+    const { type, submit, root } = await open('/redefinir-senha');
+    type('reset-token', RESET_TOKEN);
+    type('reset-new-password', NEW_PASSWORD);
+    await submit();
+    await vi.waitFor(() =>
+      expect(received).toEqual({ token: RESET_TOKEN, newPassword: NEW_PASSWORD }),
+    );
+    // The fields may hold what the person typed until they leave; nothing else may.
+    for (const input of root().querySelectorAll('input')) {
+      input.value = '';
+    }
+    assertResetTokenGone(root);
+  });
+
+  it('catches a reset token left in the URL or on the screen (negative control)', async () => {
+    server.use(anonymous());
+    const { root } = await open('/redefinir-senha');
+    window.history.replaceState(null, '', `/redefinir-senha?token=${RESET_TOKEN}`);
+    expect(() => assertResetTokenGone(root)).toThrow();
+    window.history.replaceState(null, '', '/');
+    (root().querySelector('#reset-token') as HTMLInputElement).value = RESET_TOKEN;
+    expect(() => assertResetTokenGone(root)).toThrow();
   });
 
   it('through a bootstrap whose body is unreadable and carries a secret', async () => {

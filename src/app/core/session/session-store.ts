@@ -50,6 +50,8 @@ export type BootstrapOutcome =
  *   session — the browser did not keep or send what the server issued. Not an expiry.
  * - `email-verified`: `POST /api/v1/email-verifications` answered 204 (FE-5). The person has no
  *   session yet; signing in is the next step.
+ * - `password-reset`: `POST /api/v1/password-resets/confirmation` answered 204 (FE-6), which ends
+ *   every session of the account; signing in with the new password is the next step.
  */
 export const SIGN_IN_NOTICES = [
   'session-expired',
@@ -57,6 +59,7 @@ export const SIGN_IN_NOTICES = [
   'sign-out-unconfirmed',
   'session-not-established',
   'email-verified',
+  'password-reset',
 ] as const;
 export type SignInNotice = (typeof SIGN_IN_NOTICES)[number];
 
@@ -95,6 +98,8 @@ export class SessionStore {
 
   /** True while `establish()` reads the state right after a successful sign-in. */
   private establishing = false;
+  /** How many `peek()` reads are under way: for them, a 401 is a visitor, not an expiry. */
+  private peeking = 0;
   /** The request in flight, shared by everyone who asks while it runs. */
   private inFlight: Promise<BootstrapOutcome> | null = null;
   /** Bumped whenever the session changes hands, so a late answer for an old one is dropped. */
@@ -139,6 +144,25 @@ export class SessionStore {
   }
 
   /**
+   * The bootstrap, as a PUBLIC screen needs it (registration, password reset — FE-6): whether
+   * someone is signed in. The same single read as `ensureLoaded`, with one difference: a 401 here
+   * is the expected answer of a visitor, not a session that ended, so it does not take the expiry
+   * path — no navigation to sign in, no notice, no remembered route. The store is still left
+   * `signed-out`. Never rejects.
+   */
+  async peek(): Promise<BootstrapOutcome> {
+    if (this.phase() === 'signed-in' || this.phase() === 'signed-out') {
+      return this.ensureLoaded();
+    }
+    this.peeking++;
+    try {
+      return await this.ensureLoaded();
+    } finally {
+      this.peeking--;
+    }
+  }
+
+  /**
    * Reads the state again, after something that changes it: consent given, setup completed, a
    * plan generation finished, a sign-in. Callable without a navigation. A failure keeps the state
    * already held — a refresh that did not reach the server says nothing about the session — and is
@@ -155,6 +179,11 @@ export class SessionStore {
    */
   expire(): boolean {
     if (this.ended()) {
+      return false;
+    }
+    if (this.peeking > 0) {
+      // The read of a public screen (`peek`): nobody was signed in, and nobody is sent anywhere.
+      // `settleError` leaves the store signed out.
       return false;
     }
     if (this.establishing) {

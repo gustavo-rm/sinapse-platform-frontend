@@ -17,8 +17,9 @@ import { ErrorState } from '../../../shared/ui/error-state/error-state';
 import { LoadingState } from '../../../shared/ui/loading-state/loading-state';
 import { RateLimitNotice } from '../../../shared/ui/rate-limit-notice/rate-limit-notice';
 import { PrivacyApi } from '../data/privacy-api';
-import { currentWordings, grantableHere, inContractOrder } from '../model/consent';
-import { ConsentDisclosure } from '../ui/consent-disclosure';
+import { grantableHere, inContractOrder } from '../model/consent';
+import { ConsentDisclosure } from '../../../shared/ui/consent-disclosure/consent-disclosure';
+import { currentWordings } from '../../../shared/ui/consent-disclosure/wording';
 
 /** Said when the server answered 409 to a grant: the state or the wording moved under the page. */
 export const CHANGED_MESSAGE =

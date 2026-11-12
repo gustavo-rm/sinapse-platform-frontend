@@ -14,6 +14,7 @@ import {
   gateGuard,
   publicGuard,
   sessionGuard,
+  todayPlanMatch,
   unavailableGuard,
 } from './core/session/session-guards';
 
@@ -143,6 +144,16 @@ export const routes: Routes = [
       import('./layouts/student-layout/student-layout').then((m) => m.StudentLayout),
     canActivateChild: [sessionGuard],
     children: [
+      // `/hoje` is a router of state (`docs/DESIGN_SYSTEM.md` §2.2). No plan, or a plan being made: the plan's
+      // screen (FE-8). Otherwise the day (FE-9). Chosen here, by the session state, so that neither
+      // feature imports the other (R3).
+      {
+        path: 'hoje',
+        title: 'Hoje · SINAPSE',
+        canMatch: [todayPlanMatch],
+        loadComponent: () =>
+          import('./features/plan/pages/plan-start-page').then((m) => m.PlanStartPage),
+      },
       {
         path: 'hoje',
         title: 'Hoje · SINAPSE',

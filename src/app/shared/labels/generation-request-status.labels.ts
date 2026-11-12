@@ -5,6 +5,6 @@ export const GENERATION_REQUEST_STATUS_LABELS: Record<GenerationRequestStatus, s
   PENDING: 'Na fila',
   RUNNING: 'Em execução',
   READY: 'Pronto',
-  FAILED: 'Falhou',
-  CANCELLED: 'Cancelado',
+  FAILED: 'Não concluído',
+  CANCELLED: 'Encerrado pelo servidor',
 };

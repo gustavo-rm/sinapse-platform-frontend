@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import type { CanActivateChildFn, CanActivateFn, GuardResult } from '@angular/router';
+import type { CanActivateChildFn, CanActivateFn, CanMatchFn, GuardResult } from '@angular/router';
 import { RedirectCommand, Router } from '@angular/router';
 
 import {
@@ -11,6 +11,7 @@ import {
   accessToPublic,
   pathOf,
 } from './gate';
+import type { AccountState } from './account-state';
 import { SessionStore } from './session-store';
 
 /**
@@ -104,4 +105,30 @@ export const publicGuard: CanActivateFn = async () => {
   return new RedirectCommand(router.parseUrl(access === 'app' ? APP_HOME_PATH : pathOf(access)), {
     replaceUrl: true,
   });
+};
+
+/**
+ * Whether `/hoje` shows the states of the PLAN rather than the day (`docs/DESIGN_SYSTEM.md` §2.2): a plan is
+ * being made (`activeGenerationJobId`), or there is none in force (`activePlanId` absent). Never a
+ * gate — the chain does not hold anyone on a plan state; it is which screen `/hoje` is.
+ *
+ * Row 1 of `docs/DESIGN_SYSTEM.md` §2.2 — a study session in progress comes before both — is FE-9's, with the screen that
+ * resumes it; until then an open session does not change what `/hoje` shows.
+ */
+export function todayShowsPlan(state: AccountState): boolean {
+  return (
+    state.accountStatus === 'ACTIVE' &&
+    (state.activeGenerationJobId !== null || state.activePlanId === null)
+  );
+}
+
+/**
+ * `canMatch` of the plan's `/hoje` (FE-8): the route composition chooses between the plan's
+ * screen and the day's by the session state, so neither feature imports the other (R3). Awaits
+ * the one bootstrap; anything but a signed-in state falls through to the day's route, whose
+ * `sessionGuard` then does what the chain says.
+ */
+export const todayPlanMatch: CanMatchFn = async () => {
+  const outcome = await inject(SessionStore).ensureLoaded();
+  return outcome.kind === 'signed-in' && todayShowsPlan(outcome.state);
 };

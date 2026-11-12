@@ -4,6 +4,8 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { HttpResponse, type JsonBodyType, http } from 'msw';
 
 import { fixture } from '../../../testing/msw/fixtures';
+import { FAST_POLLING, FITNESS, planBody, planServer } from '../../../testing/plan';
+import { openApp } from '../../../testing/privacy';
 import { useMswServer } from '../../../testing/msw/server';
 import { appConfig } from '../../app.config';
 import { ApiRoutes } from '../api/api-routes';
@@ -464,5 +466,130 @@ describe('no secret reaches the console or storage', () => {
     const { router } = await open('/hoje');
     expect(router.url).toBe('/indisponivel');
     assertNothingLeaked();
+  });
+});
+
+/**
+ * `fitness` never reaches the student (FE-8). The Core puts the engine and its build in it (backend
+ * K17), so on a pilot that compares engines, any trace of it on a student's screen says which arm of
+ * the experiment they are in: experiment contamination, not a cosmetic defect. Neither rendered,
+ * logged, put in the title, in a data attribute or in storage — on the two plan routes that carry
+ * it (`/study-plans/current` and the summary), on the history, and through a generation.
+ */
+describe('fitness never reaches the screen, the title, the DOM attributes, the console or storage', () => {
+  const FITNESS_SECRETS = [
+    FITNESS.engine,
+    FITNESS.build,
+    FITNESS.strategy,
+    FITNESS['topics-unscheduled-ids'][0],
+    'availability-utilisation',
+    'topics-unscheduled',
+  ];
+  const logged: unknown[][] = [];
+
+  beforeEach(() => {
+    for (const method of ['log', 'info', 'warn', 'error', 'debug', 'trace'] as const) {
+      vi.spyOn(console, method).mockImplementation((...args: unknown[]) => {
+        logged.push(args);
+      });
+    }
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    logged.length = 0;
+  });
+
+  /** Everything a person or a script on the page could read: text, every attribute, the title, logs, storage. */
+  function assertNoFitness(root: HTMLElement): void {
+    const surfaces = [
+      root.textContent ?? '',
+      document.documentElement.outerHTML,
+      document.title,
+      [...root.querySelectorAll('*')]
+        .flatMap((element) => [...element.attributes].map((attr) => `${attr.name}=${attr.value}`))
+        .join(' '),
+      logged
+        .map((args) =>
+          args.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' '),
+        )
+        .join('\n'),
+      JSON.stringify({ ...localStorage }),
+      JSON.stringify({ ...sessionStorage }),
+    ];
+    for (const secret of FITNESS_SECRETS) {
+      for (const surface of surfaces) {
+        expect(surface).not.toContain(secret);
+      }
+    }
+  }
+
+  async function openPlan(url: string, options: Parameters<typeof planServer>[0] = {}) {
+    TestBed.resetTestingModule();
+    const backend = planServer(options);
+    server.use(...backend.handlers);
+    const app = await openApp(url, FAST_POLLING);
+    return { app, backend };
+  }
+
+  it('catches fitness when it is there (negative control of the check itself)', async () => {
+    const { app } = await openPlan('/plano', { plans: [planBody()] });
+    await vi.waitFor(() => expect(app.text()).toContain('O que este plano pede'));
+    assertNoFitness(app.root());
+
+    const planted = app.root().querySelector('h1') as HTMLElement;
+    planted.setAttribute('data-engine', FITNESS.engine);
+    expect(() => assertNoFitness(app.root())).toThrow();
+    planted.removeAttribute('data-engine');
+
+    console.info({ fitness: FITNESS });
+    expect(() => assertNoFitness(app.root())).toThrow();
+    logged.length = 0;
+
+    const title = document.title;
+    document.title = `Plano · ${FITNESS.build}`;
+    expect(() => assertNoFitness(app.root())).toThrow();
+    document.title = title;
+
+    planted.append(document.createTextNode(FITNESS.strategy));
+    expect(() => assertNoFitness(app.root())).toThrow();
+  });
+
+  it('on /plano: `current`, the summary and the sessions all carry it, and none of it shows', async () => {
+    const { app, backend } = await openPlan('/plano', { plans: [planBody()] });
+    await vi.waitFor(() => expect(app.text()).toContain('Ver todas as sessões'));
+    (app.root().querySelector('details') as HTMLDetailsElement).open = true;
+    await app.settle();
+    expect(backend.count('GET', '/study-plans/current')).toBe(1);
+    expect(backend.count('GET', '/summary')).toBe(1);
+    assertNoFitness(app.root());
+  });
+
+  it('on /plano/historico, with a superseded plan', async () => {
+    const { app } = await openPlan('/plano/historico', {
+      plans: [
+        planBody({ id: 'plan-2' }),
+        planBody({
+          id: 'plan-1',
+          status: 'SUPERSEDED',
+          supersededAt: '2026-11-12T20:55:00Z',
+          supersededByPlanId: 'plan-2',
+        }),
+      ],
+    });
+    await vi.waitFor(() => expect(app.text()).toContain('Substituído em'));
+    assertNoFitness(app.root());
+  });
+
+  it('through a whole generation, from /hoje to the new plan', async () => {
+    const { app } = await openPlan('/hoje', {
+      steps: [{ status: 'PENDING' }, { status: 'READY', planId: 'plan-5' }],
+    });
+    await app.click('Gerar meu plano');
+    await vi.waitFor(() => expect(app.router.url).toBe('/plano'));
+    await vi.waitFor(() => expect(app.text()).toContain('Por onde começar'));
+    assertNoFitness(app.root());
   });
 });

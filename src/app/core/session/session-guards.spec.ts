@@ -10,6 +10,7 @@ import { appConfig } from '../../app.config';
 import { ApiRoutes } from '../api/api-routes';
 import { NETWORK_RETRY_DELAYS_MS } from '../api/interceptors/network-retry.interceptor';
 import { type Gate, pathOf } from './gate';
+import { todayShowsPlan } from './session-guards';
 import { SessionStore } from './session-store';
 
 const server = useMswServer();
@@ -293,5 +294,37 @@ describe('the guarded routes', () => {
 
     root().querySelector<HTMLButtonElement>('button.sign-out')?.click();
     await vi.waitFor(() => expect(router.url).toBe('/entrar'));
+  });
+});
+
+describe('todayShowsPlan — what /hoje is (FE-8)', () => {
+  const base = {
+    accountStatus: 'ACTIVE',
+    timeZone: 'America/Sao_Paulo',
+    pendingConsents: [],
+    requiresMajorityReaffirmation: false,
+    setupComplete: true,
+    activePlanId: null,
+    activeGenerationJobId: null,
+    openSessionId: null,
+  } as const;
+
+  it.each([
+    ['no plan, nothing being made', {}, true],
+    ['no plan, one being made', { activeGenerationJobId: 'j' }, true],
+    ['a plan, another being made', { activePlanId: 'p', activeGenerationJobId: 'j' }, true],
+    ['a plan, nothing being made', { activePlanId: 'p' }, false],
+  ])('%s → %s', (_name, overrides, expected) => {
+    expect(todayShowsPlan({ ...base, ...overrides })).toBe(expected);
+  });
+
+  it('never for an account that is not ACTIVE', () => {
+    expect(
+      todayShowsPlan({
+        ...base,
+        accountStatus: 'SUSPENDED',
+        setupComplete: false,
+      }),
+    ).toBe(false);
   });
 });

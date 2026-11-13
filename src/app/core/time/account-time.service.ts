@@ -39,7 +39,7 @@ export interface TimeWindow {
 }
 
 /** The ways an instant is shown. All in Brazilian Portuguese, all in the account's zone. */
-export type InstantFormat = 'date' | 'time' | 'dateTime' | 'longDate';
+export type InstantFormat = 'date' | 'time' | 'dateTime' | 'longDate' | 'weekdayDate';
 
 const LOCALE = 'pt-BR';
 const FALLBACK_ZONE = 'UTC';
@@ -59,6 +59,8 @@ const FORMAT_OPTIONS: Record<InstantFormat, Intl.DateTimeFormatOptions> = {
     hourCycle: 'h23',
   },
   longDate: { day: 'numeric', month: 'long', year: 'numeric' },
+  /** "quinta-feira, 12 de novembro": the heading of a day in a list of sessions (FE-8). */
+  weekdayDate: { weekday: 'long', day: 'numeric', month: 'long' },
 };
 
 /**
@@ -173,6 +175,14 @@ export class AccountTimeService {
   /** Today's date in the account's zone, as `yyyy-MM-dd`. */
   today(): string {
     return this.localDateAt(Date.now(), this.effectiveZone());
+  }
+
+  /**
+   * The calendar day, in the account's zone, on which an instant falls, as `yyyy-MM-dd`: what
+   * groups the sessions of a plan by day (FE-8). Never the browser's day.
+   */
+  localDateOf(instant: string | Date): string {
+    return this.localDateAt(toDate(instant).getTime(), this.effectiveZone());
   }
 
   /** Widest window, in days, a route answers. What a window picker offers and shows. */

@@ -166,6 +166,81 @@ today, by id. A closed window is a record: same ink, its period written, never s
 (F22). Closing asks for the last day it applies, inclusive; a day before it began is refused by the
 form because the server answers it with a 500 (K-U); a past day is allowed.
 
+## The plan cycle, end to end (FE-8)
+
+Built in `features/plan/`; the decisions are J1–J12 in `STATE.md`, the poll is ADR 0005. Read
+against `sinapse-platform@44f3d1f` (snapshot byte-identical to the vendored one) and the Core at
+`exam-optimizer-application@2d182c8`, engine `greedy-baseline`, and walked live (`STATE.md`, *FE-8
+walk-through*).
+
+**Where the screens are.** `/hoje` is a router of state (`docs/DESIGN_SYSTEM.md` §2.2): `app.routes.ts`
+sends it to the plan's screen (`PlanStartPage`) when `/me/state` has no `activePlanId` or has an
+`activeGenerationJobId` (`todayShowsPlan`, a `canMatch`), and to the day (FE-9) otherwise — so
+neither feature imports the other (R3). `/plano` is the plan in force; `/plano/historico` the
+history. A plan being made is never a gate.
+
+**Asking.** `POST /api/v1/study-plans/generation-requests`, no body → 201 with the job (`id`,
+`status: PENDING`, `attemptCount: 0`, horizon), no `Location`. Then `/me/state` is read again
+(`activeGenerationJobId`), which is what lets the wait survive a reload or a change of screen. The
+client never asks while the store names a running job: it follows that one.
+
+| Answer | Type | This client |
+|---|---|---|
+| 201 | — | follow the job |
+| 409 | `conflict` — a job is running (another tab) | `SessionStore.refresh()`, follow `activeGenerationJobId`; no second POST |
+| 409 | `setup-incomplete` — nothing to plan yet | `settle('app')`: the chain takes the person to `/configurar` |
+| 403 | `access-denied` | `settle('app')` |
+| 429 | `rate-limit-exceeded` — 10 per hour per account, 409s included | the wait, the action disabled for it; never asked again by itself |
+
+The two 409s carry two problem TYPES; the type decides (R6), the session state keeps the request
+from being made at all. The 409 body does not name the running job: `/me/state` does.
+
+**Following.** `GET …/generation-requests/{requestId}`, by `GenerationWatch` (provided per component,
+cleared on destroy): every 3 s for a minute, then every 10 s, stopping at five minutes with one manual
+check; paused in a hidden tab (ADR 0005). The worker claims one job per 10-second pass; with the
+default engine the call takes under a second, so READY lands at the first or second pass (measured:
+7.5–10.2 s from the click). `PENDING` with `attemptCount ≥ 1` is the server trying again after the
+Core did not answer — "Tentativas feitas até agora: N" — up to three attempts, 30 s then 60 s apart
+(measured: 120.7 s to `FAILED`). `RUNNING` lasts as long as the Core call and was never seen by the
+poll. `progress` is never read and nothing implies a proportion.
+
+**Ending.** Every end reads `/me/state` again.
+
+| Status | Screen |
+|---|---|
+| `READY` (`planId`) | from `/hoje`, to `/plano`; on `/plano`, the plan is read again and a note says the old one is in the history |
+| `FAILED` + `CORE_UNAVAILABLE` | the service did not answer, even after the server's retries; "Pedir de novo" — the only failure that offers it |
+| `FAILED` + `CORE_REJECTED` | the optimiser refused the request; asking again unchanged gets the same refusal; links to availability and goals. **Also what a Core that answers 404 produces** (F28) |
+| `FAILED` + `NOTHING_TO_PLAN` | nothing to plan when the job ran (not the 409: there the request was not even accepted); links to availability and goals |
+| `FAILED` + `INTERNAL` | a defect of the platform; nothing to repeat now |
+| `CANCELLED` | handled; no code of the backend assigns it today (F29); no cancel control exists anywhere |
+
+A failure leaves the plan in force untouched, and the screen says so.
+
+**Reading the plan.** `GET /study-plans/current` names it — **404 is the state "no plan"**, never the
+error screen; then `GET /study-plans/{planId}/summary` and `/sessions`. Ids differ: `id` on the plan,
+`planId` on the summary. The sessions carry `topicId` only (F2): the catalogue map is built once per
+screen from `GET /subjects/{subjectId}/topics` of the summary's subjects and reused by every list; a
+topic it lacks is said in words. `fitness` (with the Core's `engine` and `build`, K17) is dropped at
+the parse and proven absent from text, attributes, title, console and storage (`no-leak.spec.ts`).
+
+**The horizon** is the server's: four weeks from the SERVER's date in UTC (K-V) — at 22:27 in São
+Paulo a plan generated on 12/11 runs from 13/11 to 11/12. It does not run to a goal's target date,
+and the screen says both without claiming it starts "today".
+
+**Adherence** (`summary.adherence`) counts only sessions that fell due. No `ratio` = nothing fell due
+yet: words, no bar, never 0. A ratio: "Você concluiu X de Y sessões previstas até aqui", a
+`primary-fill` bar as support, no percentage, no judging colour. A plan can be born with sessions
+already due: the optimiser fills windows of the horizon's first day that are already over (F26) —
+observed `plannedElapsed: 2, executed: 0, ratio: 0.0` seconds after READY; the screen says those
+sessions were scheduled before the plan existed.
+
+**Re-planning** (F6, manual) is the same request with a plan in force. Its consequence is written on
+`/plano` before the button, and confirmed with an ordinary `ConfirmDialog` (J8). On READY the old plan
+is `SUPERSEDED` with `supersededAt` and `supersededByPlanId`; its sessions stay readable by
+`/study-plans/{planId}/sessions`. The history lists every plan, newest first, the superseded ones as
+a record.
+
 ## How the session works, end to end
 
 Built in FE-4. Everything below is in `src/app/core/session/` unless named otherwise.

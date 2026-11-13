@@ -34,6 +34,7 @@ import { ENROLLMENT_END_REASON_LABELS } from './enrollment-end-reason.labels';
 import { ERASURE_REQUEST_STATUS_LABELS } from './erasure-request-status.labels';
 import { GENERATION_REQUEST_STATUS_LABELS } from './generation-request-status.labels';
 import { GOAL_STATUS_LABELS } from './goal-status.labels';
+import { PLAN_GENERATION_FAILURE_NEXT_LABELS } from './plan-generation-failure-next.labels';
 import { PLAN_GENERATION_FAILURE_LABELS } from './plan-generation-failure.labels';
 import { PLAN_STATUS_LABELS } from './plan-status.labels';
 import { PLANNED_SESSION_KIND_LABELS } from './planned-session-kind.labels';
@@ -59,6 +60,7 @@ const CATALOGUES: [string, readonly string[], Record<string, string>][] = [
   ['PlannedSessionKind', PLANNED_SESSION_KINDS, PLANNED_SESSION_KIND_LABELS],
   ['GenerationRequestStatus', GENERATION_REQUEST_STATUSES, GENERATION_REQUEST_STATUS_LABELS],
   ['PlanGenerationFailure', PLAN_GENERATION_FAILURES, PLAN_GENERATION_FAILURE_LABELS],
+  ['PlanGenerationFailure (next)', PLAN_GENERATION_FAILURES, PLAN_GENERATION_FAILURE_NEXT_LABELS],
   ['SessionKind', SESSION_KINDS, SESSION_KIND_LABELS],
   ['SessionSource', SESSION_SOURCES, SESSION_SOURCE_LABELS],
   ['SessionStatus', SESSION_STATUSES, SESSION_STATUS_LABELS],
@@ -79,8 +81,8 @@ const JUDGEMENT =
   /(?<!\p{L})(ruim|insuficiente|parab[eé]ns|[oó]tim[oa]|excelente|frac[oa]|p[eé]ssim[oa]|baix[oa]|bom|boa|mal|incr[ií]vel|perfeit[oa])(?!\p{L})/iu;
 
 describe('label catalogue', () => {
-  it('covers the 16 domain enums, DayOfWeek, the problem types, the client unions (theme choice, transport failure, sign-in notice) and three more texts per consent purpose', () => {
-    expect(CATALOGUES).toHaveLength(24);
+  it('covers the 16 domain enums, DayOfWeek, the problem types, the client unions (theme choice, transport failure, sign-in notice) and three more texts per consent purpose, and what to do after each generation failure', () => {
+    expect(CATALOGUES).toHaveLength(25);
   });
 
   it('knows exactly the 17 problem types of the backend catalogue', () => {

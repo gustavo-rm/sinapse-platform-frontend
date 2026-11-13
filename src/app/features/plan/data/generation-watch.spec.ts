@@ -76,6 +76,9 @@ describe('GenerationWatch — the poll', () => {
     const cleared = vi.spyOn(globalThis, 'clearTimeout');
     const clearedInterval = vi.spyOn(globalThis, 'clearInterval');
     fixture.destroy();
+    // A check already sent when the component died may still reach the server (its answer is
+    // dropped); what must not happen is a NEW one. Count once that one has landed.
+    await sleep(20);
     const asked = polls();
     await sleep(100);
     expect(polls()).toBe(asked);

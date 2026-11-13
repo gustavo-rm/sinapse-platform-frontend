@@ -416,8 +416,9 @@ describe('re-planning', () => {
     [...dialog.querySelectorAll('button')]
       .find((b) => b.textContent?.trim() === 'Gerar plano novo')
       ?.click();
-    await vi.waitFor(() => expect(app.text()).toContain('Seu plano está pronto'));
-    expect(app.text()).toContain('O plano anterior está no histórico');
+    await vi.waitFor(() => expect(app.text()).toContain('O plano anterior está no histórico'));
+    // "Abrindo o plano…" is /hoje's, which leaves for the plan; /plano stays and never says it.
+    expect(app.text()).not.toContain('Abrindo o plano');
     expect(backend.count('POST', '/generation-requests')).toBe(1);
     expect(backend.plans().map((p) => [p.id, p.status, p.supersededByPlanId])).toEqual([
       ['plan-2', 'ACTIVE', undefined],

@@ -217,8 +217,9 @@ export class PlanGenerationPanel {
       case 'RUNNING':
         return 'waiting';
       case 'READY':
-        // On /hoje the page leaves for the plan: no empty state flashes in between.
-        return 'ready';
+        // On /hoje the page leaves for the plan: no empty state flashes in between. On /plano the
+        // panel shows nothing of its own: the page reads the new plan and a note says so.
+        return this.mode() === 'start' ? 'ready' : 'idle';
       case 'FAILED':
       case 'CANCELLED':
         return this.putAway() === job.id ? 'idle' : 'failed';

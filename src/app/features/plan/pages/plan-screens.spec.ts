@@ -284,6 +284,9 @@ describe('/plano', () => {
     expect(text).toContain('3 h 45 min de estudo marcadas');
     expect(text).toContain('De 12 de novembro de 2026 a 10 de dezembro de 2026');
     expect(text).toContain('Ele não vai até a data-alvo das suas metas');
+    // The horizon starts on the server's (UTC) date, which may be the next day in the account's zone.
+    expect(text).not.toContain('começa no dia em que');
+    expect(text).toContain('definido pelo servidor quando o plano foi gerado');
     expect(text).toContain('Anatomia Humana');
     expect(text).toContain('4 de 35 tópicos de Anatomia Humana estão neste plano.');
     // The order of the document is the order of the screen.

@@ -202,6 +202,8 @@ export class PlanGenerationPanel {
   private readonly putAway = signal<string | null>(null);
   /** Terminal jobs already acted on, so the effect acts once per job. */
   private readonly handled = new Set<string>();
+  /** The job last handed to the watch by its id. */
+  private followed: string | null = null;
   /** A job known by its id is being read for the first time. */
   private readonly opening = signal(false);
 
@@ -372,6 +374,11 @@ export class PlanGenerationPanel {
   }
 
   private follow(id: string): void {
+    // The session-state effect and a 409's own handling can both name the same job: one read.
+    if (this.followed === id) {
+      return;
+    }
+    this.followed = id;
     this.putAway.set(null);
     this.opening.set(true);
     this.watch.watch(id);

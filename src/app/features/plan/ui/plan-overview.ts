@@ -40,7 +40,9 @@ interface ShareRow {
  * a table-equivalent in the legend itself, which is a list a screen reader reads.
  *
  * The horizon is the server's, fixed (decision F3): the dates are written, and a sentence says the
- * plan does not run to a goal's target date. How many of each subject's topics the plan holds is
+ * plan does not run to a goal's target date. It starts on the SERVER's date, in UTC (K-V), which
+ * may already be the next day in the account's zone (observed at 22:27 in São Paulo: generated on
+ * 12/11, horizon from 13/11) — so the sentence does not say it starts on the day it was made. How many of each subject's topics the plan holds is
  * said too, from the sessions and the catalogue — a goal is a whole subject, and a short plan may
  * hold only part of it.
  *
@@ -56,8 +58,9 @@ interface ShareRow {
       <p class="sn-metric">{{ total() }} <span class="sn-metric__unit">de estudo marcadas</span></p>
       <p class="caption">{{ horizon() }} · {{ count() }}</p>
       <p class="body muted">
-        O período do plano é fixo e começa no dia em que ele foi gerado. Ele não vai até a data-alvo
-        das suas metas: quando este período acabar, ou quando você quiser, peça um plano novo.
+        O período do plano é fixo, definido pelo servidor quando o plano foi gerado. Ele não vai até
+        a data-alvo das suas metas: quando este período acabar, ou quando você quiser, peça um plano
+        novo.
       </p>
 
       <h3 class="h3">Por disciplina</h3>

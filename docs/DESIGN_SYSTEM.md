@@ -195,7 +195,7 @@ Os cinco que carregam mais regra de produto:
 
 **`RecallRatingField`** — instrumento de medida, não controle de formulário. Rampa de um só matiz, rótulo em texto sempre presente, nenhuma opção pré-selecionada.
 
-**`GenerationProgress`** — `progress` é sempre ausente: barra indeterminada mais tempo decorrido, nunca percentual. Escada de consulta de 2s/5s/10s com teto de 12 minutos, parada em aba oculta. A espera sobrevive a recarregar, porque `activeGenerationJobId` vem em `/me/state`.
+**`GenerationProgress`** — `progress` é sempre ausente: tempo decorrido e o que está acontecendo, em palavras, **sem barra alguma** e nunca percentual (FE-8: a prévia do artefato desenha uma trilha preenchida a 34%, que lê como dois quintos feitos). Escada de consulta de 3 s no primeiro minuto e 10 s depois, com teto de 5 minutos e uma consulta manual depois dele, parada em aba oculta — ADR 0005 deste repositório, que substitui a escada 2s/5s/10s com teto de 12 minutos do artefato. A espera sobrevive a recarregar, porque `activeGenerationJobId` vem em `/me/state`.
 
 **`InvitePreviewPanel`** — a prévia aparece **inteira** antes do aceite. É o que sustenta `INSTITUTION_SHARING` como consentimento informado; resumir descaracteriza o consentimento.
 
@@ -224,6 +224,33 @@ Regras de uso acrescentadas, que o artefato também precisa registrar:
   neutro; a palavra faz a diferença (§2.1).
 - **Data-alvo sem contagem regressiva.** A data aparece como a pessoa a deu ("Data-alvo: 15/07/2027"),
   sem "faltam", sem barra até ela: é restrição de prioridade, não horizonte (decisão F3).
+
+### Acrescentado em FE-8, ainda não refletido no artefato
+
+FE-8 (`/hoje` sem plano e gerando, `/plano`, `/plano/historico`) não acrescentou regra nem token ao
+`sinapse.css`: os componentes novos usam as classes existentes (`sn-card`, `sn-metric`, `sn-split`,
+`sn-legend`, `sn-adh`, `sn-plan-row`, `sn-badge`, `sn-state`) e estilos locais só com tokens.
+
+| Componente (Angular) | Família do artefato | O que difere do artefato |
+|---|---|---|
+| `GenerationProgress` | `GenerationProgress` | Sem barra (nem indeterminada, nem a trilha a 34% da prévia): fase em palavras numa região viva educada, relógio `m:ss` em `tabular-nums` com texto acessível em minutos, "Tentativas feitas até agora: N" quando o servidor está tentando de novo, e o aviso de que se pode sair da tela. Escada e teto da ADR 0005 |
+| `GenerationFailure` | `GenerationProgress` (falhas) | Quatro mensagens por `failureReason`, sem "nós" (F8); só `CORE_UNAVAILABLE` oferece "Pedir de novo"; `CORE_REJECTED` e `NOTHING_TO_PLAN` levam a disponibilidade e metas; `INTERNAL` não oferece repetir; `CANCELLED` tratado sem controle de cancelar. Cartão neutro, nunca `error` |
+| `PlanOverview` | `PlanSummary` | Sem chip de status no cartão (o status está na linha acima, "Em vigor"); acrescenta, por disciplina, quantos tópicos dela o plano contém ("15 de 35 tópicos…") e a frase de que o período é fixo e não vai até a data-alvo |
+| `AdherenceNote` | `AdherenceMeter` | Igual ao artefato, mais uma nota quando sessões foram marcadas para antes da criação do plano (F26). Ausente: só palavras, nenhuma trilha |
+| `NextSession` | — (novo) | "Por onde começar": uma sessão, a próxima pelo horário. Dado de `PlannedSessionResponse` + mapa de catálogo |
+| `SessionList` | — (novo; a agenda é o `AgendaDay`, FE-9) | A sequência inteira num `<details>` fechado, agrupada pelo dia da CONTA, tópico pelo nome |
+| `PlanHistoryList` | `PlanHistoryList` | A cadeia em palavras: "Substituído em …, pelo plano gerado em …". Mesma tinta para o substituído; nenhum riscado |
+
+Regras de uso acrescentadas:
+
+- **Espera sem proporção.** Nenhuma barra, nenhum percentual, nenhuma estimativa em espera de
+  geração; o relógio que anda é o sinal de vida. Depois do teto, o relógio para.
+- **`fitness` não chega a componente algum.** É descartado na leitura (`model/plan.ts`); nem valor,
+  nem chave, nem atributo, nem título.
+- **Aderência com sessões nascidas vencidas.** Quando o plano marcou sessões para antes de existir,
+  a frase diz isso, para que o número não leia como algo que a pessoa deixou de fazer.
+- **Plano parcial dito em palavras.** Um plano de horizonte fixo pode conter só parte de uma
+  disciplina; a tela diz quantos tópicos dela estão nele.
 
 ---
 

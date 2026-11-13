@@ -31,7 +31,9 @@ of `GET /api/v1/me/state`; the guard chain that decides where an account may go;
 screen; sign-out; the password change with its local clear; and the account time zone (FE-4). The
 consent, reaffirmation and suspended screens and the public e-mail verification (FE-5).
 Registration and the password reset, as public screens under `publicGuard` (FE-6). The initial
-setup is still a placeholder (FE-7), and there is no study screen yet. Change detection is zoneless
+setup: availability and goals (FE-7). Asking for a plan, following the job, the plan in force, its
+summary and history, re-planning (FE-8; the poll is `docs/adr/0005-consulta-do-job-de-geracao.md`).
+There is no agenda or study screen yet (FE-9). Change detection is zoneless
 (`docs/adr/0001-deteccao-de-mudancas.md`). Types are generated and the client is hand-written
 (`docs/adr/0002-tipos-gerados-cliente-escrito.md`). The session state is read imperatively and
 exposed as signals (`docs/adr/0003-leitura-imperativa-do-estado-de-sessao.md`). How the session works
